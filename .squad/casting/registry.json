@@ -1,0 +1,12 @@
+{
+  "agents": {
+    "lead": { "persistent_name": "Lead", "role": "Lead/Architect", "universe": "descriptive", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "backend": { "persistent_name": "Backend", "role": ".NET Library Dev", "universe": "descriptive", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "functions": { "persistent_name": "Functions", "role": "Azure Functions Integration", "universe": "descriptive", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "tester": { "persistent_name": "Tester", "role": "Tester", "universe": "descriptive", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "scribe": { "persistent_name": "Scribe", "role": "Session Logger", "universe": "builtin", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "ralph": { "persistent_name": "Ralph", "role": "Work Monitor", "universe": "builtin", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "Rai": { "persistent_name": "Rai", "role": "RAI Reviewer", "universe": "builtin", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" },
+    "fact-checker": { "persistent_name": "Fact Checker", "role": "Fact Checker", "universe": "builtin", "created_at": "2026-08-26T09:49:06+02:00", "legacy_named": false, "status": "active" }
+  }
+}

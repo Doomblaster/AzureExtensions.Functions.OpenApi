@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Azure.Functions.OpenApi</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>Azure.Functions.OpenApi</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Azure.Functions.OpenApi contributors</Authors>
+    <Description>Adds an OpenAPI 3.x document endpoint to an Azure Functions isolated worker (v4) app via a single AddOpenApi() registration call. The document is built with Microsoft.OpenApi.</Description>
+    <PackageTags>azure-functions;openapi;swagger;isolated-worker;dotnet-isolated</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Azure.Functions.OpenApi.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.OpenApi" Version="3.10.2" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
+  </ItemGroup>
+
+</Project>
