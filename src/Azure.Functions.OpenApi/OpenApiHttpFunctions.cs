@@ -108,6 +108,9 @@ public sealed class OpenApiHttpFunctions
     /// Builds an absolute URL to the JSON document endpoint from the incoming request, honoring the
     /// configured <see cref="OpenApiOptions.RoutePrefix"/> and <see cref="OpenApiOptions.JsonRoute"/>.
     /// Segments are trimmed of stray slashes so the result never contains empty or doubled path parts.
+    /// When the request arrives through a reverse proxy (e.g. the Aspire dev proxy) the
+    /// <c>X-Forwarded-Host</c> / <c>X-Forwarded-Proto</c> headers are used so the emitted URL points at
+    /// the public-facing endpoint the browser can actually reach, not the internal listener.
     /// </summary>
     private string BuildJsonUrl(HttpRequest request)
     {
@@ -117,7 +120,26 @@ public sealed class OpenApiHttpFunctions
 
         var path = string.Join('/', new[] { pathBase, prefix, jsonRoute }.Where(s => !string.IsNullOrEmpty(s)));
 
-        return $"{request.Scheme}://{request.Host}/{path}";
+        var scheme = ResolveForwardedValue(request, "X-Forwarded-Proto") ?? request.Scheme;
+        var host = ResolveForwardedValue(request, "X-Forwarded-Host") ?? request.Host.Value;
+
+        return $"{scheme}://{host}/{path}";
+    }
+
+    /// <summary>
+    /// Returns the first value of a forwarded header when it is present and non-empty; otherwise
+    /// <see langword="null"/>. Proxies may append multiple comma-separated values (the client-facing
+    /// hop is the first), so only the leading entry is used.
+    /// </summary>
+    private static string? ResolveForwardedValue(HttpRequest request, string headerName)
+    {
+        if (!request.Headers.TryGetValue(headerName, out var values))
+        {
+            return null;
+        }
+
+        var first = values.ToString().Split(',', 2)[0].Trim();
+        return string.IsNullOrEmpty(first) ? null : first;
     }
 
     /// <summary>

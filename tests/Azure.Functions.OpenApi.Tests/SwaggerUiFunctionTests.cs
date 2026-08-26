@@ -25,7 +25,12 @@ public sealed class SwaggerUiFunctionTests
         return new OpenApiHttpFunctions(provider, wrapped, NullLogger<OpenApiHttpFunctions>.Instance);
     }
 
-    private static HttpRequest CreateHttpRequest(string scheme = "https", string host = "localhost", string pathBase = "")
+    private static HttpRequest CreateHttpRequest(
+        string scheme = "https",
+        string host = "localhost",
+        string pathBase = "",
+        string? forwardedHost = null,
+        string? forwardedProto = null)
     {
         var context = new DefaultHttpContext();
         context.Request.Scheme = scheme;
@@ -33,6 +38,16 @@ public sealed class SwaggerUiFunctionTests
         if (!string.IsNullOrEmpty(pathBase))
         {
             context.Request.PathBase = new PathString(pathBase);
+        }
+
+        if (forwardedHost is not null)
+        {
+            context.Request.Headers["X-Forwarded-Host"] = forwardedHost;
+        }
+
+        if (forwardedProto is not null)
+        {
+            context.Request.Headers["X-Forwarded-Proto"] = forwardedProto;
         }
 
         return context.Request;
@@ -120,5 +135,64 @@ public sealed class SwaggerUiFunctionTests
         var (status, _, _) = await ExecuteAsync(result);
 
         Assert.Equal(StatusCodes.Status404NotFound, status);
+    }
+
+    [Fact]
+    public async Task GetSwaggerUi_UsesForwardedHost_WhenXForwardedHostPresent()
+    {
+        var functions = CreateFunctions(o => o.EnableSwaggerUi = true);
+
+        // Mirrors the Aspire dev proxy: the internal listener is localhost:51516, but the browser
+        // reached the app via the public-facing localhost:7071 carried in X-Forwarded-Host.
+        var result = functions.GetSwaggerUi(CreateHttpRequest(
+            scheme: "http",
+            host: "localhost:51516",
+            forwardedHost: "localhost:7071"));
+        var (_, _, body) = await ExecuteAsync(result);
+
+        Assert.Contains("url: \"http://localhost:7071/api/openapi.json\"", body);
+        Assert.DoesNotContain("localhost:51516", body);
+    }
+
+    [Fact]
+    public async Task GetSwaggerUi_UsesForwardedProto_WhenXForwardedProtoPresent()
+    {
+        var functions = CreateFunctions(o => o.EnableSwaggerUi = true);
+
+        // TLS-terminating proxy: the internal hop is http, but the client-facing scheme is https.
+        var result = functions.GetSwaggerUi(CreateHttpRequest(
+            scheme: "http",
+            host: "internal:8080",
+            forwardedHost: "api.contoso.com",
+            forwardedProto: "https"));
+        var (_, _, body) = await ExecuteAsync(result);
+
+        Assert.Contains("url: \"https://api.contoso.com/api/openapi.json\"", body);
+    }
+
+    [Fact]
+    public async Task GetSwaggerUi_UsesFirstForwardedHost_WhenMultipleCommaSeparated()
+    {
+        var functions = CreateFunctions(o => o.EnableSwaggerUi = true);
+
+        // A chain of proxies appends values; the client-facing hop is the first entry.
+        var result = functions.GetSwaggerUi(CreateHttpRequest(
+            scheme: "https",
+            host: "internal:8080",
+            forwardedHost: "public.example.com, gateway.internal"));
+        var (_, _, body) = await ExecuteAsync(result);
+
+        Assert.Contains("url: \"https://public.example.com/api/openapi.json\"", body);
+    }
+
+    [Fact]
+    public async Task GetSwaggerUi_FallsBackToHost_WhenNoForwardedHeaders()
+    {
+        var functions = CreateFunctions(o => o.EnableSwaggerUi = true);
+
+        var result = functions.GetSwaggerUi(CreateHttpRequest(scheme: "https", host: "direct.example.com"));
+        var (_, _, body) = await ExecuteAsync(result);
+
+        Assert.Contains("url: \"https://direct.example.com/api/openapi.json\"", body);
     }
 }

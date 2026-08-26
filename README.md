@@ -356,6 +356,13 @@ Alongside the raw documents, the library serves an interactive **Swagger UI** pa
 Swagger UI and points it at your `openapi.json` endpoint. The JSON URL is derived from the incoming
 request, so it honours the host's `RoutePrefix` and the configured `JsonRoute` automatically.
 
+When the app runs behind a reverse proxy (for example the **.NET Aspire** dev proxy), the internal
+listener host/port differs from the public-facing address the browser actually used. The JSON URL
+therefore honours the standard `X-Forwarded-Host` and `X-Forwarded-Proto` headers when they are
+present — falling back to `request.Host` / `request.Scheme` otherwise — so the Swagger UI loads the
+spec from a URL the browser can reach. If a proxy chain supplies multiple comma-separated values,
+the first (client-facing) entry is used.
+
 The Swagger UI assets — `swagger-ui.css`, `swagger-ui-bundle.js`, and
 `swagger-ui-standalone-preset.js` — are loaded from a **CDN (jsDelivr)** and are **not embedded or
 bundled** in the library, so the package stays free of vendored JavaScript. The asset version is
