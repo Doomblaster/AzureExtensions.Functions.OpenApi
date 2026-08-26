@@ -76,6 +76,7 @@ many as you need. Parameter attributes may be repeated on a single method.
 | `[OpenApiPathParameter]` | `(string name, Type type)` | `Required` (default `true`), `Description` |
 | `[OpenApiRequestBody]` | `(Type type)` | `Required` (default `true`), `ContentType`, `Description` |
 | `[OpenApiResponse]` | `(int statusCode)` | `Type` (omit for no body), `ContentType`, `Description` |
+| `[OpenApiResponseHeader]` | `(string name, Type type, params int[] statusCodes)` | `Required`, `Deprecated`, `Description` |
 
 ### Annotated CRUD example
 
@@ -145,6 +146,42 @@ public sealed class ItemsFunctions
 ```
 
 A complete, runnable version of this app lives in `samples/SampleFunctionApp/`.
+
+### Response headers
+
+Use `[OpenApiResponseHeader]` to document a header returned on a response. Each header is emitted as
+an OpenAPI Header Object under `responses.{statusCode}.headers.{name}`, with an inline schema derived
+from the supplied CLR type. The attribute may be repeated on a single method.
+
+```csharp
+[OpenApiResponse(201, Type = typeof(Item), Description = "The created item.")]
+[OpenApiResponseHeader("Location", typeof(Uri), 201, Description = "URL of the newly created item.")]
+public Task<IResult> CreateItem(/* ... */) => /* ... */;
+```
+
+The trailing `params int[] statusCodes` controls which responses the header attaches to:
+
+- **One or more status codes** — the header is attached to each listed response. If a listed status
+  code has no `[OpenApiResponse]`, a bare response is created so the header is not lost. A single
+  attribute can therefore span several codes:
+
+  ```csharp
+  [OpenApiResponse(200, Type = typeof(List<Item>), Description = "Matching items.")]
+  [OpenApiResponse(400, Type = typeof(HttpValidationProblemDetails), Description = "Invalid request.")]
+  [OpenApiResponseHeader("X-Request-Id", typeof(Guid), 200, 400, Description = "Correlation id.")]
+  public IResult SearchItems(/* ... */) => /* ... */;
+  ```
+
+- **No status codes** — the header is attached to **every** response documented for the method (or to
+  the synthetic `200` when the method documents none). Already-present responses are targeted; no new
+  responses are invented.
+
+  ```csharp
+  [OpenApiResponseHeader("X-Trace-Id", typeof(string), Description = "Trace id on all responses.")]
+  ```
+
+Response headers are distinct from **request** header parameters (`[OpenApiHeaderParameter]`), which
+document inbound headers as operation parameters.
 
 ## Unannotated endpoints
 

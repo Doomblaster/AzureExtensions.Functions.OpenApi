@@ -109,6 +109,7 @@ internal sealed class OpenApiPathsBuilder
         var headerParamAttributes = method.GetCustomAttributes<OpenApiHeaderParameterAttribute>().ToList();
         var requestBodyAttribute = method.GetCustomAttribute<OpenApiRequestBodyAttribute>();
         var responseAttributes = method.GetCustomAttributes<OpenApiResponseAttribute>().ToList();
+        var responseHeaderAttributes = method.GetCustomAttributes<OpenApiResponseHeaderAttribute>().ToList();
 
         var hasAnyAttribute =
             operationAttribute is not null ||
@@ -116,7 +117,8 @@ internal sealed class OpenApiPathsBuilder
             queryParamAttributes.Count > 0 ||
             headerParamAttributes.Count > 0 ||
             requestBodyAttribute is not null ||
-            responseAttributes.Count > 0;
+            responseAttributes.Count > 0 ||
+            responseHeaderAttributes.Count > 0;
 
         if (!hasAnyAttribute && !includeUnannotated)
         {
@@ -139,7 +141,8 @@ internal sealed class OpenApiPathsBuilder
                 queryParamAttributes,
                 headerParamAttributes,
                 requestBodyAttribute,
-                responseAttributes);
+                responseAttributes,
+                responseHeaderAttributes);
 
             pathItem.Operations![ParseHttpMethod(httpMethod)] = operation;
         }
@@ -153,7 +156,8 @@ internal sealed class OpenApiPathsBuilder
         IReadOnlyList<OpenApiQueryParameterAttribute> queryParamAttributes,
         IReadOnlyList<OpenApiHeaderParameterAttribute> headerParamAttributes,
         OpenApiRequestBodyAttribute? requestBodyAttribute,
-        IReadOnlyList<OpenApiResponseAttribute> responseAttributes)
+        IReadOnlyList<OpenApiResponseAttribute> responseAttributes,
+        IReadOnlyList<OpenApiResponseHeaderAttribute> responseHeaderAttributes)
     {
         var operation = new OpenApiOperation
         {
@@ -189,7 +193,7 @@ internal sealed class OpenApiPathsBuilder
             operation.RequestBody = BuildRequestBody(components, requestBodyAttribute);
         }
 
-        operation.Responses = BuildResponses(components, responseAttributes);
+        operation.Responses = BuildResponses(components, responseAttributes, responseHeaderAttributes);
 
         return operation;
     }
@@ -299,13 +303,15 @@ internal sealed class OpenApiPathsBuilder
 
     private OpenApiResponses BuildResponses(
         OpenApiComponents components,
-        IReadOnlyList<OpenApiResponseAttribute> responseAttributes)
+        IReadOnlyList<OpenApiResponseAttribute> responseAttributes,
+        IReadOnlyList<OpenApiResponseHeaderAttribute> responseHeaderAttributes)
     {
         var responses = new OpenApiResponses();
 
         if (responseAttributes.Count == 0)
         {
             responses["200"] = new OpenApiResponse { Description = "Success" };
+            ApplyResponseHeaders(components, responses, responseHeaderAttributes);
             return responses;
         }
 
@@ -330,7 +336,56 @@ internal sealed class OpenApiPathsBuilder
             responses[attribute.StatusCode.ToString()] = response;
         }
 
+        ApplyResponseHeaders(components, responses, responseHeaderAttributes);
+
         return responses;
+    }
+
+    private void ApplyResponseHeaders(
+        OpenApiComponents components,
+        OpenApiResponses responses,
+        IReadOnlyList<OpenApiResponseHeaderAttribute> responseHeaderAttributes)
+    {
+        foreach (var attribute in responseHeaderAttributes)
+        {
+            IEnumerable<string> targetKeys;
+
+            if (attribute.StatusCodes.Length > 0)
+            {
+                foreach (var statusCode in attribute.StatusCodes)
+                {
+                    var key = statusCode.ToString();
+                    if (!responses.ContainsKey(key))
+                    {
+                        responses[key] = new OpenApiResponse { Description = string.Empty };
+                    }
+                }
+
+                targetKeys = attribute.StatusCodes.Select(static c => c.ToString());
+            }
+            else
+            {
+                // An empty list targets only already-present responses.
+                targetKeys = responses.Keys.ToList();
+            }
+
+            foreach (var key in targetKeys)
+            {
+                if (responses[key] is not OpenApiResponse response)
+                {
+                    continue;
+                }
+
+                response.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.Ordinal);
+                response.Headers[attribute.Name] = new OpenApiHeader
+                {
+                    Schema = _schemaGenerator.GetOrCreateSchema(attribute.Type, components),
+                    Description = attribute.Description,
+                    Required = attribute.Required,
+                    Deprecated = attribute.Deprecated,
+                };
+            }
+        }
     }
 
     // The RFC 9457 media type for problem responses. The ProblemDetails family is served as

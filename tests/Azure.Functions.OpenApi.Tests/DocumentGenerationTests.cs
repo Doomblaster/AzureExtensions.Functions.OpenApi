@@ -226,6 +226,37 @@ public sealed class DocumentGenerationTests
     }
 
     [Fact]
+    public async Task Document_CreateItem_Has201LocationResponseHeader()
+    {
+        var document = await BuildSampleDocumentAsync();
+
+        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items"]);
+        var create = items.Operations![HttpMethod.Post];
+
+        var header = Assert.IsType<OpenApiHeader>(create.Responses!["201"].Headers!["Location"]);
+        Assert.Equal("URL of the newly created item.", header.Description);
+
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.String, schema.Type);
+        Assert.Equal("uri", schema.Format);
+    }
+
+    [Fact]
+    public async Task Document_ListItems_Has200RateLimitResponseHeader()
+    {
+        var document = await BuildSampleDocumentAsync();
+
+        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items"]);
+        var list = items.Operations![HttpMethod.Get];
+
+        var header = Assert.IsType<OpenApiHeader>(list.Responses!["200"].Headers!["X-RateLimit-Remaining"]);
+
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.Integer, schema.Type);
+        Assert.Equal("int32", schema.Format);
+    }
+
+    [Fact]
     public async Task Document_ViaAddOpenApi_ResolvesProviderFromDi()
     {
         var services = new ServiceCollection();

@@ -47,6 +47,32 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiOperation(OperationId = "getXmlProblemWidget", Summary = "Get widget or xml problem")]
     [OpenApiResponse(400, Type = typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), ContentType = "application/xml", Description = "Bad request.")]
     public void GetXmlProblemWidget() { }
+
+    [OpenApiOperation(OperationId = "singleHeaderWidget", Summary = "Single-status header")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponseHeader("X-RateLimit-Remaining", typeof(int), 200, Required = true, Description = "Requests remaining.")]
+    public void SingleHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "multiHeaderWidget", Summary = "Multi-status header")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(400, Description = "Bad.")]
+    [OpenApiResponseHeader("X-Request-Id", typeof(System.Guid), 200, 400, Description = "Correlation id.")]
+    public void MultiHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "missingResponseHeaderWidget", Summary = "Header on undocumented status")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponseHeader("Location", typeof(System.Uri), 201, Description = "Created resource URL.")]
+    public void MissingResponseHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "emptyStatusHeaderWidget", Summary = "Header on all documented responses")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(404, Description = "Missing.")]
+    [OpenApiResponseHeader("X-Trace-Id", typeof(string), Description = "Trace id on all responses.")]
+    public void EmptyStatusHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "emptyStatusNoResponseWidget", Summary = "Header with no documented responses")]
+    [OpenApiResponseHeader("X-Trace-Id", typeof(string), Description = "Trace id on synthetic 200.")]
+    public void EmptyStatusNoResponseWidget() { }
 }
 
 /// <summary>
@@ -228,5 +254,69 @@ public sealed class PathsBuilderTests
         var content = operation.Responses!["200"].Content!;
         Assert.True(content.ContainsKey("application/json"));
         Assert.False(content.ContainsKey("application/problem+json"));
+    }
+
+    [Fact]
+    public void Populate_ResponseHeader_SingleStatus_AttachesToThatResponse()
+    {
+        var endpoint = Endpoint("/api/widgets/rl", "GET", nameof(PathsBuilderFakeFunctions.SingleHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out var document);
+
+        var headers = operation.Responses!["200"].Headers!;
+        var header = Assert.IsType<OpenApiHeader>(headers["X-RateLimit-Remaining"]);
+        Assert.True(header.Required);
+        Assert.Equal("Requests remaining.", header.Description);
+
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.Integer, schema.Type);
+        Assert.Equal("int32", schema.Format);
+    }
+
+    [Fact]
+    public void Populate_ResponseHeader_MultipleStatuses_AttachesToEach()
+    {
+        var endpoint = Endpoint("/api/widgets/multi", "GET", nameof(PathsBuilderFakeFunctions.MultiHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["400"].Headers!.ContainsKey("X-Request-Id"));
+    }
+
+    [Fact]
+    public void Populate_ResponseHeader_UndocumentedStatus_CreatesBareResponse()
+    {
+        var endpoint = Endpoint("/api/widgets/created", "GET", nameof(PathsBuilderFakeFunctions.MissingResponseHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!.ContainsKey("201"));
+        var created = operation.Responses!["201"];
+        Assert.Equal(string.Empty, created.Description);
+        Assert.True(created.Headers!.ContainsKey("Location"));
+        Assert.Null(created.Content);
+    }
+
+    [Fact]
+    public void Populate_ResponseHeader_EmptyStatus_AttachesToAllDocumentedResponses()
+    {
+        var endpoint = Endpoint("/api/widgets/all", "GET", nameof(PathsBuilderFakeFunctions.EmptyStatusHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Trace-Id"));
+        Assert.True(operation.Responses!["404"].Headers!.ContainsKey("X-Trace-Id"));
+    }
+
+    [Fact]
+    public void Populate_ResponseHeader_EmptyStatus_NoResponseAttributes_AttachesToSynthetic200()
+    {
+        var endpoint = Endpoint("/api/widgets/synthetic", "GET", nameof(PathsBuilderFakeFunctions.EmptyStatusNoResponseWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!.ContainsKey("200"));
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Trace-Id"));
     }
 }

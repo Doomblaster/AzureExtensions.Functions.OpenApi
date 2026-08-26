@@ -39,6 +39,7 @@ public sealed class ItemsFunctions
     [OpenApiQueryParameter("status", typeof(ItemStatus), Required = false, Description = "Filter items by lifecycle status.")]
     [OpenApiQueryParameter("page", typeof(int), Required = false, Description = "1-based page number.")]
     [OpenApiResponse(200, Type = typeof(List<Item>), Description = "The matching items.")]
+    [OpenApiResponseHeader("X-RateLimit-Remaining", typeof(int), 200, Description = "Requests remaining in the current window.")]
     public IResult ListItems(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "items")] HttpRequest req)
     {
@@ -89,6 +90,8 @@ public sealed class ItemsFunctions
     [OpenApiQueryParameter("name", typeof(string), Required = true, Description = "The name (or partial name) to search for.")]
     [OpenApiResponse(200, Type = typeof(List<Item>), Description = "Matching items.")]
     [OpenApiResponse(400, Type = typeof(Microsoft.AspNetCore.Http.HttpValidationProblemDetails), Description = "The request was invalid.")]
+    [OpenApiResponseHeader("x-continuation-token", typeof(string), 200, Description = "Opaque cursor for the next page.")]
+    [OpenApiResponseHeader("X-Request-Id", typeof(Guid), 200, 400, Description = "Correlation id echoed on success and validation failure.")]
     public IResult SearchItems(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "items/search")] HttpRequest req)
     {
@@ -121,6 +124,7 @@ public sealed class ItemsFunctions
     [OpenApiHeaderParameter("X-Correlation-Id", typeof(Guid), Required = false, Description = "Optional client correlation identifier.")]
     [OpenApiRequestBody(typeof(CreateItemRequest), Description = "The item to create.")]
     [OpenApiResponse(201, Type = typeof(Item), Description = "The created item.")]
+    [OpenApiResponseHeader("Location", typeof(Uri), 201, Description = "URL of the newly created item.")]
     public async Task<IResult> CreateItem(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "items")] HttpRequest req)
     {
