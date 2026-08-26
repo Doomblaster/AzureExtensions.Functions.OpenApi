@@ -128,32 +128,36 @@
 
 **Why:** RFC 9457 errors need stable wire-shaped schemas that differ from normal CLR property casing and from MVC's extension-data implementation details. Name-only detection preserves ASP.NET Core integration support without taking a direct MVC package dependency. Register-once components and `allOf` keep generated OpenAPI concise and interoperable, while automatic `application/problem+json` matches standards-based error responses unless users explicitly choose another content type. The feature is verified by targeted and end-to-end coverage: 17 new tests for schemas, paths, and sample document generation; coordinator final verification reported `dotnet build` at 0 warnings/0 errors and `dotnet test` at 101/101 passing.
 
+
+### 2026-08-26T21:39:52+02:00: Minimal xUnit v3 Microsoft.Testing.Platform test setup (consolidated)
+
+**By:** Hockney (Tester), Copilot (coordinator)
+**Status:** Accepted
+
+**What:** The test project uses a minimal pure-MTP setup: `tests/Azure.Functions.OpenApi.Tests` references only `xunit.v3` 4.0.0 for test infrastructure. `xunit.runner.visualstudio` and `Microsoft.NET.Test.Sdk` were removed after the earlier xUnit v3 migration. The repo-root `global.json` keeps `dotnet test` opted into `Microsoft.Testing.Platform`; use `dotnet test --project <path>` for a single project and `dotnet test --solution <path.slnx>` for an explicit solution.
+
+**Why:** `xunit.v3` 4.0.0 has native MTP support built in and brings the required platform/runner/analyzers transitively, so VSTest infrastructure packages are unnecessary. Dropping `xunit.runner.visualstudio` accepts loss of legacy VSTest-protocol Test Explorer discovery; modern VS/VS Code C# Dev Kit, CLI, and CI use MTP. Verified with 110/110 tests passing and 0 warnings before later feature work.
+
+### 2026-08-26: OpenAPI response headers via `[OpenApiResponseHeader]`
+
+**By:** Fenster
+**Status:** Accepted
+
+**What:** Added a new public attribute `OpenApiResponseHeaderAttribute(string name, Type type, params int[] statusCodes)` with settable `Description`, `Required`, and `Deprecated`. Wired it through `OpenApiPathsBuilder.BuildResponses` via `ApplyResponseHeaders` so OpenAPI Header Objects with inline schemas are emitted under `responses.{statusCode}.headers.{name}`. Non-empty status lists fan out to each code and create a bare `OpenApiResponse { Description = string.Empty }` when needed; an empty status list targets already-present responses, including the synthetic `200`.
+
+**Why:** Keeps response headers separate from request-header parameters (`[OpenApiHeaderParameter]`) and preserves byte-identical behavior when no response-header attributes are present. Sample, unit, end-to-end, and README coverage were updated. Build: 0 warnings / 0 errors. Tests: 117/117 passing.
+
+### 2026-08-26T21:39:52+02:00: Separate response-header attribute is canonical
+
+**By:** Scribe
+**Status:** Accepted
+
+**What:** The canonical way to declare response headers in this library is a separate `OpenApiResponseHeaderAttribute`, not a `Direction` flag on the request-header attribute. Multi-status targeting uses `params int[] statusCodes`; an empty status-code list applies to all documented responses.
+
+**Why:** OpenAPI response headers are status-code-scoped Header Objects, distinct from request Parameter Objects. A dedicated attribute preserves OpenAPI semantic fidelity while keeping multi-status response-header declarations concise.
+
 ## Governance
 
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
-
-### 2026-08-26: Test project migrated to xUnit v3 + MTP-mode `dotnet test`
-
-**By:** Hockney (Tester)
-
-**Status:** Accepted
-
-**What:**
-- Team note: Because the repo now opts into the Microsoft.Testing.Platform runner through repo-root `global.json`, `dotnet test` CLI syntax changed. To target a single project, use `dotnet test --project <path>`; positional project paths are rejected in MTP mode.
-- Migrated `tests/Azure.Functions.OpenApi.Tests` from xUnit v2 to xUnit v3:
-  - Removed `xunit` 2.9.3; added `xunit.v3` 4.0.0.
-  - Bumped `xunit.runner.visualstudio` 3.1.5 → 4.0.0 (kept IncludeAssets/PrivateAssets block).
-  - Bumped `Microsoft.NET.Test.Sdk` 17.14.1 → 18.9.0.
-  - Added `<OutputType>Exe</OutputType>` (xUnit v3 test projects are self-executing).
-- Added a repo-root `global.json` with `{ "test": { "runner": "Microsoft.Testing.Platform" } }` to opt `dotnet test` into MTP mode.
-- Fixed 7 new `xUnit1051` analyzer warnings by passing `TestContext.Current.CancellationToken` to `GetDocumentAsync(...)` calls in `DocumentProviderTests.cs` and `DocumentGenerationTests.cs`.
-
-**Why:**
-- xUnit v3 ships as the separate `xunit.v3` package (not a version bump of `xunit`), and its runner model requires an executable test host.
-- On the .NET 10 SDK, the legacy VSTest target used by `dotnet test` is **no longer supported** ("Testing with VSTest target is no longer supported by Microsoft.Testing.Platform on .NET 10 SDK and later"). xUnit v3 runs on the Microsoft Testing Platform (MTP), so the whole team must opt into MTP mode for `dotnet test` to work. The `global.json` `test.runner` setting is the officially recommended, future-proof opt-in (the alternative `TestingPlatformDotnetTestSupport=true` VSTest-compat path is deprecated and slated for removal in MTP v2).
-- xUnit v3's new `xUnit1051` analyzer flags cancellation-token-accepting calls; forwarding `TestContext.Current.CancellationToken` keeps the build warning-clean and makes tests cancellation-responsive.
-
-**Result:** `dotnet build` = 0 warnings / 0 errors. `dotnet test` = 110/110 passed, running under xUnit.net v3 In-Process Runner v4.0.0 on Microsoft Testing Platform. No production (`src/`) or sample-app code changed.
-
