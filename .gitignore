@@ -15,3 +15,6 @@
 
 # .NET test output
 [Tt]est[Rr]esults/
+
+# NuGet pack output (CI writes here)
+artifacts/

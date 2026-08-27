@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>SampleFunctionApp</RootNamespace>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Azure.Functions.OpenApi\Azure.Functions.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src\AzureExtensions.Functions.OpenApi\AzureExtensions.Functions.OpenApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>

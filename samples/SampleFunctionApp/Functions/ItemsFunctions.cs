@@ -1,4 +1,4 @@
-using Azure.Functions.OpenApi;
+using AzureExtensions.Functions.OpenApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using SampleFunctionApp.Models;
