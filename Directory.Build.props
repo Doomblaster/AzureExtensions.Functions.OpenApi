@@ -7,9 +7,9 @@
   -->
 
   <PropertyGroup>
-    <RepositoryUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi</PackageProjectUrl>
     <Authors>AzureExtensions.Functions.OpenApi contributors</Authors>
     <Company>AzureExtensions.Functions.OpenApi contributors</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -1,6 +1,6 @@
 # AzureExtensions.Functions.OpenApi
 
-[![CI](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml)
+[![CI](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml)
 
 A reusable .NET 10 class library that adds an **OpenAPI 3.x document endpoint** to an
 [Azure Functions isolated worker (v4)](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
@@ -463,7 +463,7 @@ One-time setup to enable publishing:
 1. **Register a Trusted Publishing policy on nuget.org** — sign in → your username →
    *Trusted Publishing* → add a policy with:
    - **Repository Owner:** `Doomblaster`
-   - **Repository:** `Azure.Functions.OpenApi`
+   - **Repository:** `AzureExtensions.Functions.OpenApi`
    - **Workflow File:** `publish.yml` (file name only)
    - **Environment:** `release`
 2. **Create the `release` environment** in the GitHub repo (*Settings → Environments*). Optionally
