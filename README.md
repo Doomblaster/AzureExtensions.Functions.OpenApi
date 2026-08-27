@@ -449,11 +449,29 @@ version number to bump by hand.
 |---------|----------|--------|
 | Pull request / push to `dev` or `main` | `ci.yml` | Build, test, and pack; the `.nupkg`/`.snupkg` are uploaded as build artifacts (no publish) |
 | Push to `dev` | `publish.yml` | Prerelease published to **GitHub Packages** (uses the built-in `GITHUB_TOKEN`) |
-| Push a `v*` tag (e.g. `v1.2.0`) | `publish.yml` | Stable release published to **NuGet.org** |
+| Push a `v*` tag (e.g. `v1.2.0`) | `publish.yml` | Stable release published to **NuGet.org** via Trusted Publishing |
 
-Publishing to NuGet.org requires a repository secret named **`NUGET_API_KEY`**. Until it is set,
-the release job runs but skips the push with a warning — nothing is published. The GitHub Packages
-prerelease channel needs no extra configuration.
+### NuGet.org Trusted Publishing (keyless)
+
+Releases publish to NuGet.org with [**Trusted Publishing**](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing)
+— there is **no long-lived API key** to store or rotate. At publish time the workflow requests a
+short-lived GitHub **OIDC** token, exchanges it with nuget.org (via
+[`NuGet/login`](https://github.com/NuGet/login)) for a temporary key valid ~1 hour, and pushes.
+
+One-time setup to enable publishing:
+
+1. **Register a Trusted Publishing policy on nuget.org** — sign in → your username →
+   *Trusted Publishing* → add a policy with:
+   - **Repository Owner:** `Doomblaster`
+   - **Repository:** `Azure.Functions.OpenApi`
+   - **Workflow File:** `publish.yml` (file name only)
+   - **Environment:** `release`
+2. **Create the `release` environment** in the GitHub repo (*Settings → Environments*). Optionally
+   add **required reviewers** so each release pauses for manual approval before publishing.
+3. **Set the `NUGET_USER` repository variable** (*Settings → Secrets and variables → Actions →
+   Variables*) to your nuget.org profile name. The release job stays a no-op until this is set.
+
+The GitHub Packages prerelease channel needs no extra configuration.
 
 To cut a release:
 
@@ -463,7 +481,8 @@ git tag v1.2.0
 git push origin main --tags
 ```
 
-The `v1.2.0` tag makes MinVer stamp the package `1.2.0`, and `publish.yml` pushes it to NuGet.org.
+The `v1.2.0` tag makes MinVer stamp the package `1.2.0`, and `publish.yml` publishes it to NuGet.org
+(after the `release` environment approval, if configured).
 
 Packages are built deterministically with embedded [SourceLink](https://github.com/dotnet/sourcelink)
 metadata and a separate `.snupkg` symbol package for source-linked debugging.
