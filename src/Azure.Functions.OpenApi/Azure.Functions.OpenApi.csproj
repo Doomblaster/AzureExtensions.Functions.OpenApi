@@ -10,14 +10,23 @@
 
     <IsPackable>true</IsPackable>
     <PackageId>Azure.Functions.OpenApi</PackageId>
-    <Version>0.1.0</Version>
-    <Authors>Azure.Functions.OpenApi contributors</Authors>
     <Description>Adds an OpenAPI 3.x document endpoint to an Azure Functions isolated worker (v4) app via a single AddOpenApi() registration call. The document is built with Microsoft.OpenApi.</Description>
     <PackageTags>azure-functions;openapi;swagger;isolated-worker;dotnet-isolated</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- MinVer: the package version is derived from the latest `v*` git tag.
+         With no tag, MinVer emits 0.0.0-preview.0.N height-based prereleases. -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Azure.Functions.OpenApi.Tests" />
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
+    <None Include="../../README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, test & pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # MinVer needs full history + tags to compute the version.
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Azure.Functions.OpenApi.slnx
+
+      - name: Build
+        run: dotnet build Azure.Functions.OpenApi.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test --solution Azure.Functions.OpenApi.slnx -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/Azure.Functions.OpenApi/Azure.Functions.OpenApi.csproj -c Release --no-build -o artifacts
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error

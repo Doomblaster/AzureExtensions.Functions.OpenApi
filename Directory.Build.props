@@ -1,0 +1,26 @@
+<Project>
+
+  <!--
+    Shared build properties for the whole repository. These are safe to apply to
+    every project; packaging-only settings live in the library csproj (where
+    IsPackable is set locally, avoiding Directory.Build.props import-order issues).
+  -->
+
+  <PropertyGroup>
+    <RepositoryUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</PackageProjectUrl>
+    <Authors>Azure.Functions.OpenApi contributors</Authors>
+    <Company>Azure.Functions.OpenApi contributors</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) Azure.Functions.OpenApi contributors</Copyright>
+
+    <!-- Deterministic, source-linked builds. ContinuousIntegrationBuild is turned on
+         automatically in CI (the CI env var is set by GitHub Actions). -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+</Project>

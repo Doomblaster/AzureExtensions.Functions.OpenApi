@@ -1,5 +1,7 @@
 # Azure.Functions.OpenApi
 
+[![CI](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml)
+
 A reusable .NET 10 class library that adds an **OpenAPI 3.x document endpoint** to an
 [Azure Functions isolated worker (v4)](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
 app. Reference the package, call one registration method, and your app exposes an OpenAPI
@@ -435,3 +437,33 @@ dotnet build Azure.Functions.OpenApi.slnx
 ```
 
 Requires the .NET 10 SDK.
+
+## Packaging & releasing
+
+The library is published as a NuGet package. Versioning is **tag-driven** via
+[MinVer](https://github.com/adamralph/minver): the package version is derived from the latest
+`v*` git tag, and commits after a tag produce `-preview.N` prereleases automatically. There is no
+version number to bump by hand.
+
+| Trigger | Workflow | Result |
+|---------|----------|--------|
+| Pull request / push to `dev` or `main` | `ci.yml` | Build, test, and pack; the `.nupkg`/`.snupkg` are uploaded as build artifacts (no publish) |
+| Push to `dev` | `publish.yml` | Prerelease published to **GitHub Packages** (uses the built-in `GITHUB_TOKEN`) |
+| Push a `v*` tag (e.g. `v1.2.0`) | `publish.yml` | Stable release published to **NuGet.org** |
+
+Publishing to NuGet.org requires a repository secret named **`NUGET_API_KEY`**. Until it is set,
+the release job runs but skips the push with a warning — nothing is published. The GitHub Packages
+prerelease channel needs no extra configuration.
+
+To cut a release:
+
+```bash
+git switch main && git merge --ff-only dev   # promote dev → main when ready
+git tag v1.2.0
+git push origin main --tags
+```
+
+The `v1.2.0` tag makes MinVer stamp the package `1.2.0`, and `publish.yml` pushes it to NuGet.org.
+
+Packages are built deterministically with embedded [SourceLink](https://github.com/dotnet/sourcelink)
+metadata and a separate `.snupkg` symbol package for source-linked debugging.
