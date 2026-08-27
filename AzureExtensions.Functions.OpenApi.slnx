@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/samples/">
+    <Project Path="samples/SampleFunctionApp/SampleFunctionApp.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AzureExtensions.Functions.OpenApi/AzureExtensions.Functions.OpenApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AzureExtensions.Functions.OpenApi.Tests/AzureExtensions.Functions.OpenApi.Tests.csproj" />
+  </Folder>
+</Solution>

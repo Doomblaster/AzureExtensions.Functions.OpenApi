@@ -1,4 +1,4 @@
-# Azure.Functions.OpenApi
+# AzureExtensions.Functions.OpenApi
 
 [![CI](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/Azure.Functions.OpenApi/actions/workflows/ci.yml)
 
@@ -35,7 +35,7 @@ Once registered, the app serves (using the default `api` route prefix):
 ## Install
 
 ```bash
-dotnet add package Azure.Functions.OpenApi
+dotnet add package AzureExtensions.Functions.OpenApi
 ```
 
 ## Quick start
@@ -43,7 +43,7 @@ dotnet add package Azure.Functions.OpenApi
 In your isolated worker `Program.cs`:
 
 ```csharp
-using Azure.Functions.OpenApi;
+using AzureExtensions.Functions.OpenApi;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -425,15 +425,15 @@ model types you expose, or keep them with trimming roots/`DynamicDependency` if 
 ## Repository layout
 
 ```
-Azure.Functions.OpenApi.slnx
-src/Azure.Functions.OpenApi/      # the library
+AzureExtensions.Functions.OpenApi.slnx
+src/AzureExtensions.Functions.OpenApi/      # the library
 samples/SampleFunctionApp/        # isolated worker v4 sample consumer
 ```
 
 ## Build
 
 ```bash
-dotnet build Azure.Functions.OpenApi.slnx
+dotnet build AzureExtensions.Functions.OpenApi.slnx
 ```
 
 Requires the .NET 10 SDK.

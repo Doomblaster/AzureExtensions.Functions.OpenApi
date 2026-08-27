@@ -27,16 +27,16 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore Azure.Functions.OpenApi.slnx
+        run: dotnet restore AzureExtensions.Functions.OpenApi.slnx
 
       - name: Build
-        run: dotnet build Azure.Functions.OpenApi.slnx -c Release --no-restore
+        run: dotnet build AzureExtensions.Functions.OpenApi.slnx -c Release --no-restore
 
       - name: Test
-        run: dotnet test --solution Azure.Functions.OpenApi.slnx -c Release --no-build
+        run: dotnet test --solution AzureExtensions.Functions.OpenApi.slnx -c Release --no-build
 
       - name: Pack
-        run: dotnet pack src/Azure.Functions.OpenApi/Azure.Functions.OpenApi.csproj -c Release --no-build -o artifacts
+        run: dotnet pack src/AzureExtensions.Functions.OpenApi/AzureExtensions.Functions.OpenApi.csproj -c Release --no-build -o artifacts
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4

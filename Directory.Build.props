@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/Doomblaster/Azure.Functions.OpenApi</PackageProjectUrl>
-    <Authors>Azure.Functions.OpenApi contributors</Authors>
-    <Company>Azure.Functions.OpenApi contributors</Company>
+    <Authors>AzureExtensions.Functions.OpenApi contributors</Authors>
+    <Company>AzureExtensions.Functions.OpenApi contributors</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Copyright>Copyright (c) Azure.Functions.OpenApi contributors</Copyright>
+    <Copyright>Copyright (c) AzureExtensions.Functions.OpenApi contributors</Copyright>
 
     <!-- Deterministic, source-linked builds. ContinuousIntegrationBuild is turned on
          automatically in CI (the CI env var is set by GitHub Actions). -->

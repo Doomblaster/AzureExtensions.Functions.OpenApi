@@ -32,7 +32,7 @@ jobs:
           global-json-file: global.json
 
       - name: Pack
-        run: dotnet pack src/Azure.Functions.OpenApi/Azure.Functions.OpenApi.csproj -c Release -o artifacts
+        run: dotnet pack src/AzureExtensions.Functions.OpenApi/AzureExtensions.Functions.OpenApi.csproj -c Release -o artifacts
 
       # Mint a short-lived NuGet API key from the GitHub OIDC token. The key is valid ~1 hour
       # and single-use, so this runs immediately before the push.
@@ -70,7 +70,7 @@ jobs:
           global-json-file: global.json
 
       - name: Pack
-        run: dotnet pack src/Azure.Functions.OpenApi/Azure.Functions.OpenApi.csproj -c Release -o artifacts
+        run: dotnet pack src/AzureExtensions.Functions.OpenApi/AzureExtensions.Functions.OpenApi.csproj -c Release -o artifacts
 
       - name: Push to GitHub Packages
         run: >
