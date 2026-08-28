@@ -309,7 +309,8 @@ For response header sets, the trailing `params int[] statusCodes` uses the same 
 `[OpenApiResponseHeader]`:
 
 - **One or more status codes** — apply the set to each listed response.
-- **No status codes** — apply the set to every documented response on the method.
+- **No status codes** — apply the set to every response already documented on the method (via
+  `[OpenApiResponse]`); it does not invent new responses.
 
 On a case-insensitive name collision, an individual attribute on the same method always wins over
 the matching set member. In the `CreateItem` example above, the method reuses

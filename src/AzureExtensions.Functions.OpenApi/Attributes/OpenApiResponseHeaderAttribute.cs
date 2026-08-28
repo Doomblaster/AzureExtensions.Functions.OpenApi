@@ -25,7 +25,8 @@ public class OpenApiResponseHeaderAttribute : Attribute
     /// <param name="type">The CLR type used to derive the header schema.</param>
     /// <param name="statusCodes">
     /// The HTTP status codes this header is attached to. When empty, the header is attached to
-    /// every response documented for the method.
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
     /// </param>
     public OpenApiResponseHeaderAttribute(string name, Type type, params int[] statusCodes)
     {
@@ -46,7 +47,8 @@ public class OpenApiResponseHeaderAttribute : Attribute
 
     /// <summary>
     /// The HTTP status codes this header is attached to. When empty, the header is attached to
-    /// every response documented for the method.
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
     /// </summary>
     public int[] StatusCodes { get; }
 
@@ -81,7 +83,8 @@ public sealed class OpenApiResponseHeaderAttribute<T> : OpenApiResponseHeaderAtt
     /// </summary>
     /// <param name="statusCodes">
     /// The HTTP status codes this header is attached to. When empty, the header is attached to
-    /// every response documented for the method.
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
     /// </param>
     public OpenApiResponseHeaderAttribute(params int[] statusCodes)
         : this(new T(), statusCodes)

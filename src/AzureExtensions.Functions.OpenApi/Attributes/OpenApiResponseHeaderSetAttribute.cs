@@ -10,7 +10,8 @@ namespace AzureExtensions.Functions.OpenApi;
 /// parameterless constructor that implements
 /// <see cref="IOpenApiHeaderDefinitionCollection"/>. The <c>statusCodes</c>
 /// semantics mirror <see cref="OpenApiResponseHeaderAttribute"/>: when empty, the header set
-/// applies to every response documented for the method. When reusable
+/// applies to every response already documented for the method (via other response
+/// attributes); it does not invent new responses. When reusable
 /// <see cref="IOpenApiHeaderDefinition"/> types exist, prefer
 /// <see cref="OpenApiResponseHeaderAttribute{T}"/> for standalone usage and this attribute for
 /// bundled reuse through an <see cref="IOpenApiHeaderDefinitionCollection"/>. On a
