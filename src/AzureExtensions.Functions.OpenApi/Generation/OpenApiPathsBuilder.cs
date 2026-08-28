@@ -504,7 +504,7 @@ internal sealed class OpenApiPathsBuilder
             }
         }
 
-        return statusCodes.Select(static c => c.ToString());
+        return statusCodes.Select(static c => c.ToString()).ToArray();
     }
 
     private void ApplyResponseHeaderSetMember(
