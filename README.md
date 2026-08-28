@@ -75,10 +75,12 @@ many as you need. Parameter attributes may be repeated on a single method.
 | `[OpenApiOperation]` | *(none)* | `OperationId`, `Summary`, `Description`, `Tags`, `Deprecated` |
 | `[OpenApiQueryParameter]` | `(string name, Type type)` | `Required`, `Description` |
 | `[OpenApiHeaderParameter]` | `(string name, Type type)` | `Required`, `Description` |
+| `[OpenApiHeaderParameterSet]` | `(Type collectionType)` | `CollectionType` |
 | `[OpenApiPathParameter]` | `(string name, Type type)` | `Required` (default `true`), `Description` |
 | `[OpenApiRequestBody]` | `(Type type)` | `Required` (default `true`), `ContentType`, `Description` |
 | `[OpenApiResponse]` | `(int statusCode)` | `Type` (omit for no body), `ContentType`, `Description` |
 | `[OpenApiResponseHeader]` | `(string name, Type type, params int[] statusCodes)` | `Required`, `Deprecated`, `Description` |
+| `[OpenApiResponseHeaderSet]` | `(Type collectionType, params int[] statusCodes)` | `CollectionType`, `StatusCodes` |
 
 ### Annotated CRUD example
 
@@ -184,6 +186,97 @@ The trailing `params int[] statusCodes` controls which responses the header atta
 
 Response headers are distinct from **request** header parameters (`[OpenApiHeaderParameter]`), which
 document inbound headers as operation parameters.
+
+### Header sets (reusable header groups)
+
+If the same headers always travel together, you can define them once and reuse them with
+`[OpenApiHeaderParameterSet]` or `[OpenApiResponseHeaderSet]` instead of repeating several
+single-header attributes on every method.
+
+Define a concrete collection type with a public parameterless constructor that implements the
+matching interface:
+
+```csharp
+using AzureExtensions.Functions.OpenApi;
+
+namespace SampleFunctionApp.Headers;
+
+public sealed class CatalogRequestHeaders : IOpenApiRequestHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } =
+    [
+        new RequestHeaderDefinition
+        {
+            Name = "X-Correlation-Id",
+            Type = typeof(Guid),
+            Description = "Client-supplied correlation identifier for catalog write operations.",
+            Required = true,
+        },
+        new RequestHeaderDefinition
+        {
+            Name = "X-Tenant-Id",
+            Type = typeof(Guid),
+            Description = "Tenant identifier used to scope the catalog request.",
+            Required = true,
+        },
+    ];
+}
+
+public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiResponseHeaderDefinition> Headers { get; } =
+    [
+        new ResponseHeaderDefinition
+        {
+            Name = "X-RateLimit-Limit",
+            Type = typeof(int),
+            Description = "Maximum number of catalog read requests allowed in the current window.",
+            Required = true,
+            Deprecated = false,
+        },
+        new ResponseHeaderDefinition
+        {
+            Name = "X-RateLimit-Remaining",
+            Type = typeof(int),
+            Description = "Catalog read requests remaining in the current window.",
+            Required = true,
+            Deprecated = false,
+        },
+    ];
+}
+```
+
+Apply the set attribute the same way you apply individual header attributes:
+
+```csharp
+[Function("CreateItem")]
+[OpenApiOperation(OperationId = "createItem", Summary = "Create an item", Tags = new[] { ItemsTag })]
+[OpenApiHeaderParameterSet(typeof(CatalogRequestHeaders))]
+[OpenApiHeaderParameter("X-Correlation-Id", typeof(Guid), Required = false, Description = "Optional client correlation identifier.")]
+[OpenApiRequestBody(typeof(CreateItemRequest), Description = "The item to create.")]
+[OpenApiResponse(201, Type = typeof(Item), Description = "The created item.")]
+public Task<IResult> CreateItem(/* ... */) => /* ... */;
+
+[Function("SearchItems")]
+[OpenApiOperation(OperationId = "searchItems", Summary = "Search items", Tags = new[] { ItemsTag })]
+[OpenApiResponse(200, Type = typeof(List<Item>), Description = "Matching items.")]
+[OpenApiResponse(400, Type = typeof(HttpValidationProblemDetails), Description = "The request was invalid.")]
+[OpenApiResponseHeaderSet(typeof(CatalogRateLimitHeaders), 200, 400)]
+[OpenApiResponseHeader("X-Request-Id", typeof(Guid), 200, 400, Description = "Correlation id echoed on success and validation failure.")]
+public IResult SearchItems(/* ... */) => /* ... */;
+```
+
+For response header sets, the trailing `params int[] statusCodes` uses the same rules as
+`[OpenApiResponseHeader]`:
+
+- **One or more status codes** — apply the set to each listed response.
+- **No status codes** — apply the set to every documented response on the method.
+
+On a case-insensitive name collision, an individual attribute on the same method always wins over
+the matching set member. In the `CreateItem` example above, the method reuses
+`CatalogRequestHeaders`, but its individual `[OpenApiHeaderParameter("X-Correlation-Id", ...)]`
+overrides the set's `X-Correlation-Id` declaration for that method. The same precedence rule
+applies to `[OpenApiResponseHeader]` versus `[OpenApiResponseHeaderSet]`.
 
 ## Unannotated endpoints
 

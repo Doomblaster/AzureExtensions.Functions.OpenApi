@@ -29,6 +29,19 @@ public sealed class DocumentGenerationTests
         return await provider.GetDocumentAsync();
     }
 
+    private static async Task<OpenApiDocument> BuildHeaderSetFixtureDocumentAsync()
+    {
+        var options = new OpenApiOptions
+        {
+            Title = "Header Set Fixture API",
+            Version = "1.0.0",
+        };
+        options.DocumentAssemblies.Add(typeof(DocumentHeaderSetFunctions).Assembly);
+
+        var provider = new OpenApiDocumentProvider(Options.Create(options));
+        return await provider.GetDocumentAsync();
+    }
+
     [Fact]
     public async Task Document_ContainsCrudPaths()
     {
@@ -274,5 +287,45 @@ public sealed class DocumentGenerationTests
 
         Assert.Equal("DI Sample API", document.Info!.Title);
         Assert.True(document.Paths!.ContainsKey("/api/items"));
+    }
+
+    [Fact]
+    public async Task Document_TestAssemblyHeaderSetFunction_EmitsRequestAndResponseHeaderSets()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs"]);
+        var operation = pathItem.Operations![HttpMethod.Get];
+
+        var tenant = operation.Parameters!.Single(p => p.Name == "X-Tenant-Id");
+        Assert.Equal(ParameterLocation.Header, tenant.In);
+        Assert.True(tenant.Required);
+
+        var trace = operation.Parameters!.Single(p => p.Name == "X-Trace-Id");
+        Assert.Equal(ParameterLocation.Header, trace.In);
+        Assert.True(trace.Required);
+        var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
+        Assert.Equal("uuid", traceSchema.Format);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Served-By"));
+        Assert.False(document.Paths!.ContainsKey("/api/header-set-docs/malformed") &&
+                     Assert.IsType<OpenApiPathItem>(document.Paths["/api/header-set-docs/malformed"])
+                         .Operations!
+                         .ContainsKey(HttpMethod.Get));
+    }
+
+    [Fact]
+    public async Task Document_MalformedHeaderSetFunction_DoesNotBlockOtherDocumentedEndpoints()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        Assert.True(document.Paths!.ContainsKey("/api/header-set-docs"));
+
+        if (document.Paths.TryGetValue("/api/header-set-docs/malformed", out var malformedPath))
+        {
+            var pathItem = Assert.IsType<OpenApiPathItem>(malformedPath);
+            Assert.Empty(pathItem.Operations!);
+        }
     }
 }

@@ -73,6 +73,54 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiOperation(OperationId = "emptyStatusNoResponseWidget", Summary = "Header with no documented responses")]
     [OpenApiResponseHeader("X-Trace-Id", typeof(string), Description = "Trace id on synthetic 200.")]
     public void EmptyStatusNoResponseWidget() { }
+
+    [OpenApiOperation(OperationId = "requestHeaderSetWidget", Summary = "Request header set")]
+    [OpenApiHeaderParameterSet(typeof(RequestHeaderSetFixture))]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void RequestHeaderSetWidget() { }
+
+    [OpenApiOperation(OperationId = "requestHeaderSetCollisionWidget", Summary = "Request header set collision")]
+    [OpenApiHeaderParameterSet(typeof(RequestHeaderCollisionFixture))]
+    [OpenApiHeaderParameter("X-Trace-Id", typeof(Guid), Required = true, Description = "Trace identifier override.")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void RequestHeaderSetCollisionWidget() { }
+
+    [OpenApiOperation(OperationId = "requestHeaderDuplicatesWidget", Summary = "Request header duplicates")]
+    [OpenApiHeaderParameter("X-Trace-Id", typeof(string), Required = false, Description = "First trace header.")]
+    [OpenApiHeaderParameter("x-trace-id", typeof(Guid), Required = true, Description = "Second trace header.")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void RequestHeaderDuplicatesWidget() { }
+
+    [OpenApiOperation(OperationId = "responseHeaderSetTargetedWidget", Summary = "Response header set targeted")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(201, Type = typeof(Widget), Description = "Created.")]
+    [OpenApiResponse(400, Description = "Bad.")]
+    [OpenApiResponseHeaderSet(typeof(ResponseHeaderSetFixture), 200, 201)]
+    public void ResponseHeaderSetTargetedWidget() { }
+
+    [OpenApiOperation(OperationId = "responseHeaderSetAllWidget", Summary = "Response header set all")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(404, Description = "Missing.")]
+    [OpenApiResponseHeaderSet(typeof(ResponseHeaderSetFixture))]
+    public void ResponseHeaderSetAllWidget() { }
+
+    [OpenApiOperation(OperationId = "responseHeaderSetCollisionWidget", Summary = "Response header set collision")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(201, Type = typeof(Widget), Description = "Created.")]
+    [OpenApiResponseHeaderSet(typeof(ResponseHeaderCollisionFixture), 200)]
+    [OpenApiResponseHeader("X-Request-Id", typeof(Guid), 200, Required = true, Deprecated = true, Description = "Correlation identifier override.")]
+    public void ResponseHeaderSetCollisionWidget() { }
+
+    [OpenApiOperation(OperationId = "responseHeaderDuplicatesWidget", Summary = "Response header duplicates")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponseHeader("X-Request-Id", typeof(string), 200, Description = "First response header.")]
+    [OpenApiResponseHeader("x-request-id", typeof(Guid), 200, Description = "Second response header.")]
+    public void ResponseHeaderDuplicatesWidget() { }
+
+    [OpenApiOperation(OperationId = "malformedRequestHeaderSetWidget", Summary = "Malformed request header set")]
+    [OpenApiHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void MalformedRequestHeaderSetWidget() { }
 }
 
 /// <summary>
@@ -318,5 +366,151 @@ public sealed class PathsBuilderTests
 
         Assert.True(operation.Responses!.ContainsKey("200"));
         Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Trace-Id"));
+    }
+
+    [Fact]
+    public void Populate_RequestHeaderSet_AddsDeclaredHeaderParameters()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers", "GET", nameof(PathsBuilderFakeFunctions.RequestHeaderSetWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var tenant = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Tenant-Id"));
+        Assert.Equal(ParameterLocation.Header, tenant.In);
+        Assert.True(tenant.Required);
+        Assert.Equal("Tenant identifier.", tenant.Description);
+        var tenantSchema = Assert.IsType<OpenApiSchema>(tenant.Schema);
+        Assert.Equal(JsonSchemaType.String, tenantSchema.Type);
+        Assert.Equal("uuid", tenantSchema.Format);
+
+        var trace = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Trace-Id"));
+        Assert.Equal(ParameterLocation.Header, trace.In);
+        Assert.False(trace.Required);
+        Assert.Equal("Trace identifier.", trace.Description);
+        var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
+        Assert.Equal(JsonSchemaType.String, traceSchema.Type);
+        Assert.Null(traceSchema.Format);
+    }
+
+    [Fact]
+    public void Populate_RequestHeaderParameters_DuplicateIndividualAttributes_AreAppendedInOrder()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/duplicates", "GET", nameof(PathsBuilderFakeFunctions.RequestHeaderDuplicatesWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var headers = operation.Parameters!
+            .OfType<OpenApiParameter>()
+            .Where(p => string.Equals(p.Name, "X-Trace-Id", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        Assert.Equal(2, headers.Count);
+        Assert.Equal("X-Trace-Id", headers[0].Name);
+        Assert.Equal("First trace header.", headers[0].Description);
+        Assert.Equal("x-trace-id", headers[1].Name);
+        Assert.Equal("Second trace header.", headers[1].Description);
+    }
+
+    [Fact]
+    public void Populate_RequestHeaderSet_IndividualAttributeWinsOnCaseInsensitiveCollision()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/collision", "GET", nameof(PathsBuilderFakeFunctions.RequestHeaderSetCollisionWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var trace = Assert.Single(
+            operation.Parameters!,
+            p => string.Equals(p.Name, "X-Trace-Id", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Equal("X-Trace-Id", trace.Name);
+        Assert.Equal(ParameterLocation.Header, trace.In);
+        Assert.True(trace.Required);
+        Assert.Equal("Trace identifier override.", trace.Description);
+        var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
+        Assert.Equal(JsonSchemaType.String, traceSchema.Type);
+        Assert.Equal("uuid", traceSchema.Format);
+    }
+
+    [Fact]
+    public void Populate_ResponseHeaderSet_TargetedStatuses_AttachesOnlyToMatchingResponses()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/targeted", "GET", nameof(PathsBuilderFakeFunctions.ResponseHeaderSetTargetedWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Served-By"));
+        Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Served-By"));
+        Assert.False(operation.Responses!["400"].Headers?.ContainsKey("X-Request-Id") ?? false);
+        Assert.False(operation.Responses!["400"].Headers?.ContainsKey("X-Served-By") ?? false);
+    }
+
+    [Fact]
+    public void Populate_ResponseHeaderSet_EmptyStatusCodes_AttachesToAllPresentResponses()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/all", "GET", nameof(PathsBuilderFakeFunctions.ResponseHeaderSetAllWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Served-By"));
+        Assert.True(operation.Responses!["404"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["404"].Headers!.ContainsKey("X-Served-By"));
+    }
+
+    [Fact]
+    public void Populate_ResponseHeaderSet_IndividualAttributeWinsOnCaseInsensitiveCollision()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/collision", "GET", nameof(PathsBuilderFakeFunctions.ResponseHeaderSetCollisionWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var response200Headers = operation.Responses!["200"].Headers!;
+        var headerName = Assert.Single(
+            response200Headers.Keys,
+            k => string.Equals(k, "X-Request-Id", StringComparison.OrdinalIgnoreCase));
+        var header = Assert.IsType<OpenApiHeader>(response200Headers[headerName]);
+
+        Assert.True(header.Required);
+        Assert.True(header.Deprecated);
+        Assert.Equal("Correlation identifier override.", header.Description);
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.String, schema.Type);
+        Assert.Equal("uuid", schema.Format);
+
+        Assert.False(operation.Responses!["201"].Headers?.ContainsKey("X-Request-Id") ?? false);
+    }
+
+    [Fact]
+    public void Populate_ResponseHeaders_DuplicateIndividualAttributes_WithDifferentCaseRemainDistinct()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/duplicates", "GET", nameof(PathsBuilderFakeFunctions.ResponseHeaderDuplicatesWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var headers = operation.Responses!["200"].Headers!;
+
+        Assert.Equal(2, headers.Count);
+        Assert.True(headers.ContainsKey("X-Request-Id"));
+        Assert.True(headers.ContainsKey("x-request-id"));
+    }
+
+    [Fact]
+    public void Populate_MalformedHeaderSetCollection_DoesNotThrow_AndDoesNotBlockOtherEndpoints()
+    {
+        var malformed = Endpoint("/api/widgets/malformed-request-headers", "GET", nameof(PathsBuilderFakeFunctions.MalformedRequestHeaderSetWidget));
+        var valid = Endpoint("/api/widgets/request-headers", "GET", nameof(PathsBuilderFakeFunctions.RequestHeaderSetWidget));
+        var document = NewDocument();
+
+        var exception = Record.Exception(() =>
+            new OpenApiPathsBuilder().Populate(document, new[] { malformed, valid }, includeUnannotated: false));
+
+        Assert.Null(exception);
+
+        var validPath = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/widgets/request-headers"]);
+        Assert.True(validPath.Operations!.ContainsKey(HttpMethod.Get));
+
+        Assert.False(document.Paths.ContainsKey("/api/widgets/malformed-request-headers"));
     }
 }
