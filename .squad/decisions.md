@@ -219,6 +219,15 @@ inheritance or premature convenience types.
 
 **Why:** Explicit request-side naming removes ambiguity with response headers, and generic attribute sugar makes reusable-header authoring more ergonomic without breaking existing inline or `Type`-based declarations. Sample and test coverage ensure the new API shape is discoverable, documented, and behaviorally verified.
 
+### 2026-08-28: Naming correction note for earlier header-set decision entries
+
+**By:** Squad (Coordinator)
+**Status:** Accepted
+
+**What:** Flagged by Copilot's PR #3 review as append-only-history nits, not code issues: the "Header-set reviewer-requested corrections" entry above refers to `[OpenApiHeaderParameter]`, and the "Header-set sample and README adoption" entry references `samples/SampleFunctionApp/Models/ItemHeaderSets.cs`. Both were accurate at the time they were written. The subsequent "Request-header rename..." and "Unified header-definition contracts..." entries later renamed that attribute to `OpenApiRequestHeaderParameterAttribute` and the sample file was placed at `samples/SampleFunctionApp/Headers/ItemHeaderSets.cs`. This note is appended (not a retroactive edit) to point future readers to the current names/paths without altering the historical record.
+
+**Why:** `.squad/decisions.md` is append-only; the fix is a forward-pointing clarification rather than rewriting prior entries.
+
 ## Governance
 
 - All meaningful changes require team consensus
