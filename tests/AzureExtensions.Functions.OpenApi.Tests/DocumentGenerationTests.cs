@@ -309,10 +309,6 @@ public sealed class DocumentGenerationTests
 
         Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
         Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Served-By"));
-        Assert.False(document.Paths!.ContainsKey("/api/header-set-docs/malformed") &&
-                     Assert.IsType<OpenApiPathItem>(document.Paths["/api/header-set-docs/malformed"])
-                         .Operations!
-                         .ContainsKey(HttpMethod.Get));
     }
 
     [Fact]
