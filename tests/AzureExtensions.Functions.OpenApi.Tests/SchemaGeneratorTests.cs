@@ -1,5 +1,8 @@
 using System.Linq;
 using System.Text.Json.Nodes;
+using FirstCollisionItem = AzureExtensions.Functions.OpenApi.Tests.SchemaCollision.Alpha.Item;
+using SecondCollisionItem = AzureExtensions.Functions.OpenApi.Tests.SchemaCollision.A.Item;
+using ThirdCollisionItem = AzureExtensions.Functions.OpenApi.Tests.Other.A.Item;
 using AzureExtensions.Functions.OpenApi.Schema;
 using Microsoft.OpenApi;
 using Xunit;
@@ -350,6 +353,37 @@ public sealed class SchemaGeneratorTests
         generator.GetOrCreateSchema(typeof(Nested), components);
 
         Assert.Single(components.Schemas!.Keys, k => k == nameof(Nested));
+    }
+
+    [Fact]
+    public void SameNamedTypes_InDifferentNamespaces_GetDistinctSchemaIds_AndIsolatedProperties()
+    {
+        var (generator, components) = NewGenerator();
+
+        var first = Assert.IsType<OpenApiSchemaReference>(generator.GetOrCreateSchema(typeof(FirstCollisionItem), components));
+        var second = Assert.IsType<OpenApiSchemaReference>(generator.GetOrCreateSchema(typeof(SecondCollisionItem), components));
+        var third = Assert.IsType<OpenApiSchemaReference>(generator.GetOrCreateSchema(typeof(ThirdCollisionItem), components));
+
+        Assert.Equal(typeof(FirstCollisionItem).Name, first.Reference!.Id);
+        Assert.Equal($"A{typeof(SecondCollisionItem).Name}", second.Reference!.Id);
+        Assert.Equal($"A{typeof(ThirdCollisionItem).Name}2", third.Reference!.Id);
+
+        Assert.Equal(3, components.Schemas!.Count);
+        Assert.Equal(
+            new[] { "AItem", "AItem2", "Item" },
+            components.Schemas.Keys.OrderBy(key => key, StringComparer.Ordinal).ToArray());
+
+        AssertProperties("Item", nameof(FirstCollisionItem.FirstName), nameof(FirstCollisionItem.Quantity));
+        AssertProperties("AItem", nameof(SecondCollisionItem.Enabled), nameof(SecondCollisionItem.ExternalId));
+        AssertProperties("AItem2", nameof(ThirdCollisionItem.Price), nameof(ThirdCollisionItem.EffectiveDate));
+
+        void AssertProperties(string schemaId, params string[] expectedProperties)
+        {
+            var schema = Assert.IsType<OpenApiSchema>(components.Schemas[schemaId]);
+            Assert.Equal(
+                expectedProperties.OrderBy(name => name, StringComparer.Ordinal).ToArray(),
+                schema.Properties!.Keys.OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        }
     }
 
     [Fact]

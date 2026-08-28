@@ -14,7 +14,9 @@ namespace AzureExtensions.Functions.OpenApi.Schema;
 /// instances. Complex object types (classes and records) are registered exactly once into the
 /// supplied <see cref="OpenApiComponents.Schemas"/> dictionary under a stable schema id and are
 /// returned as an <see cref="OpenApiSchemaReference"/> (a <c>$ref</c> to
-/// <c>#/components/schemas/{id}</c>).
+/// <c>#/components/schemas/{id}</c>). The first type to claim a base schema name keeps that plain
+/// id; later collisions first try a last-namespace-segment prefix (for example
+/// <c>ModelsItem</c>) and only then fall back to numeric suffixes.
 /// </para>
 /// <para>
 /// In Microsoft.OpenApi 3.10.2 the schema type is expressed via the <see cref="JsonSchemaType"/>
@@ -303,11 +305,21 @@ internal sealed class OpenApiSchemaGenerator
             suffix++;
         }
 
+        // Name-only reservations have no Type/namespace metadata, so numeric suffixes remain the
+        // only deterministic disambiguation available here.
         // Reserve the name against a sentinel owner so no real type is ever assigned this id.
         _idOwners[candidate] = typeof(void);
         return candidate;
     }
 
+    /// <summary>
+    /// Reserves a stable component schema id for <paramref name="type"/>. The first type to claim
+    /// its base name keeps that plain id; a later collision first tries the type's last namespace
+    /// segment plus the same base name, then falls back to numeric suffixes on the reached
+    /// candidate until a unique id is found.
+    /// </summary>
+    /// <param name="type">The CLR type whose component schema id should be reserved.</param>
+    /// <returns>The unique schema id reserved for <paramref name="type"/>.</returns>
     private string ReserveSchemaId(Type type)
     {
         var baseName = GetSchemaBaseName(type);
@@ -315,10 +327,20 @@ internal sealed class OpenApiSchemaGenerator
         var suffix = 2;
 
         // Disambiguate collisions with a different type that already owns the base name.
-        while (_idOwners.TryGetValue(candidate, out var owner) && owner != type)
+        if (_idOwners.TryGetValue(candidate, out var owner) && owner != type)
         {
-            candidate = $"{baseName}{suffix}";
-            suffix++;
+            var lastNamespaceSegment = GetLastNamespaceSegment(type);
+            if (!string.IsNullOrEmpty(lastNamespaceSegment))
+            {
+                candidate = $"{lastNamespaceSegment}{baseName}";
+            }
+
+            var collisionBase = candidate;
+            while (_idOwners.TryGetValue(candidate, out owner) && owner != type)
+            {
+                candidate = $"{collisionBase}{suffix}";
+                suffix++;
+            }
         }
 
         _registeredIds[type] = candidate;
@@ -343,6 +365,18 @@ internal sealed class OpenApiSchemaGenerator
 
         var args = type.GetGenericArguments();
         return name + "Of" + string.Concat(Array.ConvertAll(args, GetSchemaBaseName));
+    }
+
+    private static string? GetLastNamespaceSegment(Type type)
+    {
+        var ns = type.Namespace;
+        if (string.IsNullOrEmpty(ns))
+        {
+            return null;
+        }
+
+        var lastDot = ns.LastIndexOf('.');
+        return lastDot >= 0 ? ns[(lastDot + 1)..] : ns;
     }
 
     private static IEnumerable<PropertyInfo> GetReadableProperties(Type type) =>
