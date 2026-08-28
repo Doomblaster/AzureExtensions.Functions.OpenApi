@@ -125,12 +125,70 @@ internal sealed class InvalidRequestHeaderSetWithoutPublicParameterlessConstruct
     public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } = Array.Empty<IOpenApiHeaderDefinition>();
 }
 
+internal sealed class GenericRequestHeaderDefinition : IOpenApiHeaderDefinition
+{
+    public string Name => "X-Correlation-Id";
+
+    public Type Type => typeof(Guid);
+
+    public string? Description => "Correlation identifier from generic request header.";
+
+    public bool Required => true;
+
+    public bool Deprecated => false;
+}
+
+internal sealed class GenericRequestHeaderSetFixture : IOpenApiHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
+    [
+        new GenericRequestHeaderDefinition(),
+        new TestHeaderDefinition
+        {
+            Name = "X-Generic-Trace-Id",
+            Type = typeof(string),
+            Description = "Trace identifier from generic request header set.",
+            Required = false,
+            Deprecated = true,
+        },
+    ];
+}
+
+internal sealed class GenericResponseHeaderDefinition : IOpenApiHeaderDefinition
+{
+    public string Name => "X-Processed-By";
+
+    public Type Type => typeof(string);
+
+    public string? Description => "Processing node from generic response header.";
+
+    public bool Required => false;
+
+    public bool Deprecated => true;
+}
+
+internal sealed class GenericResponseHeaderSetFixture : IOpenApiHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
+    [
+        new GenericResponseHeaderDefinition(),
+        new TestHeaderDefinition
+        {
+            Name = "X-Generic-Request-Id",
+            Type = typeof(Guid),
+            Description = "Correlation identifier from generic response header set.",
+            Required = true,
+            Deprecated = false,
+        },
+    ];
+}
+
 internal sealed class DocumentHeaderSetFunctions
 {
     [Function("DocumentHeaderSetFunction")]
     [OpenApiOperation(OperationId = "documentHeaderSet", Summary = "Document header-set coverage")]
-    [OpenApiHeaderParameterSet(typeof(RequestHeaderCollisionFixture))]
-    [OpenApiHeaderParameter("X-Trace-Id", typeof(Guid), Required = true, Description = "Trace identifier override.")]
+    [OpenApiRequestHeaderParameterSet(typeof(RequestHeaderCollisionFixture))]
+    [OpenApiRequestHeaderParameter("X-Trace-Id", typeof(Guid), Required = true, Description = "Trace identifier override.")]
     [OpenApiResponse(200, Type = typeof(string), Description = "Ok.")]
     [OpenApiResponse(201, Type = typeof(string), Description = "Created.")]
     [OpenApiResponseHeaderSet(typeof(ResponseHeaderSetFixture), 200, 201)]
@@ -138,9 +196,21 @@ internal sealed class DocumentHeaderSetFunctions
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "header-set-docs")] HttpRequest req)
         => Results.Ok("ok");
 
+    [Function("DocumentGenericHeaderAttributeFunction")]
+    [OpenApiOperation(OperationId = "documentGenericHeaderAttribute", Summary = "Generic header attribute coverage")]
+    [OpenApiRequestHeaderParameter<GenericRequestHeaderDefinition>]
+    [OpenApiRequestHeaderParameterSet<GenericRequestHeaderSetFixture>]
+    [OpenApiResponse(200, Type = typeof(string), Description = "Ok.")]
+    [OpenApiResponse(202, Type = typeof(string), Description = "Accepted.")]
+    [OpenApiResponseHeader<GenericResponseHeaderDefinition>(202)]
+    [OpenApiResponseHeaderSet<GenericResponseHeaderSetFixture>(200, 202)]
+    public IResult DocumentGenericHeaderAttributeFunction(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "header-set-docs/generic")] HttpRequest req)
+        => Results.Ok("generic");
+
     [Function("DocumentMalformedHeaderSetFunction")]
     [OpenApiOperation(OperationId = "documentMalformedHeaderSet", Summary = "Malformed header-set coverage")]
-    [OpenApiHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
+    [OpenApiRequestHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
     [OpenApiResponse(200, Type = typeof(string), Description = "Ok.")]
     public IResult DocumentMalformedHeaderSetFunction(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "header-set-docs/malformed")] HttpRequest req)

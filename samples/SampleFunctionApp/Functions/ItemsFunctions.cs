@@ -64,6 +64,7 @@ public sealed class ItemsFunctions
         Description = "Returns a single catalog item by its identifier.",
         Tags = new[] { ItemsTag })]
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
+    [OpenApiRequestHeaderParameterAttribute<TenantIdHeader>]
     [OpenApiResponse(200, Type = typeof(Item), Description = "The requested item.")]
     [OpenApiResponse(404, Type = typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), Description = "No item exists with the given identifier.")]
     public IResult GetItem(
@@ -91,7 +92,7 @@ public sealed class ItemsFunctions
     [OpenApiQueryParameter("name", typeof(string), Required = true, Description = "The name (or partial name) to search for.")]
     [OpenApiResponse(200, Type = typeof(List<Item>), Description = "Matching items.")]
     [OpenApiResponse(400, Type = typeof(Microsoft.AspNetCore.Http.HttpValidationProblemDetails), Description = "The request was invalid.")]
-    [OpenApiResponseHeaderSet(typeof(CatalogRateLimitHeaders), 200, 400)]
+    [OpenApiResponseHeaderSet<CatalogRateLimitHeaders>(200, 400)]
     [OpenApiResponseHeader("x-continuation-token", typeof(string), 200, Description = "Opaque cursor for the next page.")]
     [OpenApiResponseHeader("X-Request-Id", typeof(Guid), 200, 400, Description = "Correlation id echoed on success and validation failure.")]
     public IResult SearchItems(
@@ -123,8 +124,8 @@ public sealed class ItemsFunctions
         Summary = "Create an item",
         Description = "Creates a new catalog item and returns the created resource.",
         Tags = new[] { ItemsTag })]
-    [OpenApiHeaderParameterSet(typeof(CatalogRequestHeaders))]
-    [OpenApiHeaderParameter("X-Correlation-Id", typeof(Guid), Required = false, Description = "Optional client correlation identifier.")]
+    [OpenApiRequestHeaderParameterSet<CatalogRequestHeaders>]
+    [OpenApiRequestHeaderParameter("X-Correlation-Id", typeof(Guid), Required = false, Description = "Optional client correlation identifier.")]
     [OpenApiRequestBody(typeof(CreateItemRequest), Description = "The item to create.")]
     [OpenApiResponse(201, Type = typeof(Item), Description = "The created item.")]
     [OpenApiResponseHeader("Location", typeof(Uri), 201, Description = "URL of the newly created item.")]

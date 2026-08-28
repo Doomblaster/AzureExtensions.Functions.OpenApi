@@ -16,6 +16,22 @@ internal sealed class HeaderDefinition : IOpenApiHeaderDefinition
 }
 
 /// <summary>
+/// Reusable tenant header that can be applied directly or included in a header set.
+/// </summary>
+public sealed class TenantIdHeader : IOpenApiHeaderDefinition
+{
+    public string Name => "X-Tenant-Id";
+
+    public Type Type => typeof(Guid);
+
+    public string Description => "Tenant identifier used to scope the catalog request.";
+
+    public bool Required => true;
+
+    public bool Deprecated => false;
+}
+
+/// <summary>
 /// Reusable request headers that identify the caller and tenant for item operations.
 /// </summary>
 public sealed class CatalogRequestHeaders : IOpenApiHeaderDefinitionCollection
@@ -30,14 +46,7 @@ public sealed class CatalogRequestHeaders : IOpenApiHeaderDefinitionCollection
             Required = true,
             Deprecated = false,
         },
-        new HeaderDefinition
-        {
-            Name = "X-Tenant-Id",
-            Type = typeof(Guid),
-            Description = "Tenant identifier used to scope the catalog request.",
-            Required = true,
-            Deprecated = false,
-        },
+        new TenantIdHeader(),
     ];
 }
 

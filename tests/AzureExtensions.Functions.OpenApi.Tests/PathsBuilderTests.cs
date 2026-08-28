@@ -24,7 +24,7 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiOperation(OperationId = "getWidget", Summary = "Get widget", Description = "Fetch a widget.", Tags = new[] { "Widgets" })]
     [OpenApiPathParameter("id", typeof(int), Description = "The widget id.")]
     [OpenApiQueryParameter("verbose", typeof(bool), Required = false, Description = "Include detail.")]
-    [OpenApiHeaderParameter("X-Trace", typeof(string), Required = false, Description = "Trace header.")]
+    [OpenApiRequestHeaderParameter("X-Trace", typeof(string), Required = false, Description = "Trace header.")]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     [OpenApiResponse(404, Description = "Missing.")]
     public void GetWidget() { }
@@ -75,29 +75,29 @@ public sealed class PathsBuilderFakeFunctions
     public void EmptyStatusNoResponseWidget() { }
 
     [OpenApiOperation(OperationId = "requestHeaderSetWidget", Summary = "Request header set")]
-    [OpenApiHeaderParameterSet(typeof(RequestHeaderSetFixture))]
+    [OpenApiRequestHeaderParameterSet(typeof(RequestHeaderSetFixture))]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void RequestHeaderSetWidget() { }
 
     [OpenApiOperation(OperationId = "requestHeaderSetCollisionWidget", Summary = "Request header set collision")]
-    [OpenApiHeaderParameterSet(typeof(RequestHeaderCollisionFixture))]
-    [OpenApiHeaderParameter("X-Trace-Id", typeof(Guid), Required = true, Description = "Trace identifier override.")]
+    [OpenApiRequestHeaderParameterSet(typeof(RequestHeaderCollisionFixture))]
+    [OpenApiRequestHeaderParameter("X-Trace-Id", typeof(Guid), Required = true, Description = "Trace identifier override.")]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void RequestHeaderSetCollisionWidget() { }
 
     [OpenApiOperation(OperationId = "requestHeaderDuplicatesWidget", Summary = "Request header duplicates")]
-    [OpenApiHeaderParameter("X-Trace-Id", typeof(string), Required = false, Description = "First trace header.")]
-    [OpenApiHeaderParameter("x-trace-id", typeof(Guid), Required = true, Description = "Second trace header.")]
+    [OpenApiRequestHeaderParameter("X-Trace-Id", typeof(string), Required = false, Description = "First trace header.")]
+    [OpenApiRequestHeaderParameter("x-trace-id", typeof(Guid), Required = true, Description = "Second trace header.")]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void RequestHeaderDuplicatesWidget() { }
 
     [OpenApiOperation(OperationId = "deprecatedRequestHeaderWidget", Summary = "Deprecated request header")]
-    [OpenApiHeaderParameter("X-Deprecated-Trace", typeof(string), Required = false, Deprecated = true, Description = "Deprecated trace header.")]
+    [OpenApiRequestHeaderParameter("X-Deprecated-Trace", typeof(string), Required = false, Deprecated = true, Description = "Deprecated trace header.")]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void DeprecatedRequestHeaderWidget() { }
 
     [OpenApiOperation(OperationId = "deprecatedRequestHeaderSetWidget", Summary = "Deprecated request header set")]
-    [OpenApiHeaderParameterSet(typeof(DeprecatedRequestHeaderSetFixture))]
+    [OpenApiRequestHeaderParameterSet(typeof(DeprecatedRequestHeaderSetFixture))]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void DeprecatedRequestHeaderSetWidget() { }
 
@@ -127,8 +127,30 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiResponseHeader("x-request-id", typeof(Guid), 200, Description = "Second response header.")]
     public void ResponseHeaderDuplicatesWidget() { }
 
+    [OpenApiOperation(OperationId = "genericRequestHeaderWidget", Summary = "Generic request header")]
+    [OpenApiRequestHeaderParameter<GenericRequestHeaderDefinition>]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void GenericRequestHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "genericRequestHeaderSetWidget", Summary = "Generic request header set")]
+    [OpenApiRequestHeaderParameterSet<GenericRequestHeaderSetFixture>]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void GenericRequestHeaderSetWidget() { }
+
+    [OpenApiOperation(OperationId = "genericResponseHeaderWidget", Summary = "Generic response header")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(202, Type = typeof(Widget), Description = "Accepted.")]
+    [OpenApiResponseHeader<GenericResponseHeaderDefinition>(202)]
+    public void GenericResponseHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "genericResponseHeaderSetWidget", Summary = "Generic response header set")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    [OpenApiResponse(202, Type = typeof(Widget), Description = "Accepted.")]
+    [OpenApiResponseHeaderSet<GenericResponseHeaderSetFixture>(200, 202)]
+    public void GenericResponseHeaderSetWidget() { }
+
     [OpenApiOperation(OperationId = "malformedRequestHeaderSetWidget", Summary = "Malformed request header set")]
-    [OpenApiHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
+    [OpenApiRequestHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void MalformedRequestHeaderSetWidget() { }
 }
@@ -480,6 +502,88 @@ public sealed class PathsBuilderTests
         Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Served-By"));
         Assert.False(operation.Responses!["400"].Headers?.ContainsKey("X-Request-Id") ?? false);
         Assert.False(operation.Responses!["400"].Headers?.ContainsKey("X-Served-By") ?? false);
+    }
+
+    [Fact]
+    public void Populate_GenericRequestHeaderAttribute_CopiesDefinitionMetadata()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/generic", "GET", nameof(PathsBuilderFakeFunctions.GenericRequestHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var header = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Correlation-Id"));
+        Assert.Equal(ParameterLocation.Header, header.In);
+        Assert.True(header.Required);
+        Assert.False(header.Deprecated);
+        Assert.Equal("Correlation identifier from generic request header.", header.Description);
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.String, schema.Type);
+        Assert.Equal("uuid", schema.Format);
+    }
+
+    [Fact]
+    public void Populate_GenericRequestHeaderSetAttribute_UsesPolymorphicAttributeDiscovery()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/generic-set", "GET", nameof(PathsBuilderFakeFunctions.GenericRequestHeaderSetWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var correlation = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Correlation-Id"));
+        Assert.Equal(ParameterLocation.Header, correlation.In);
+        Assert.True(correlation.Required);
+        Assert.Equal("Correlation identifier from generic request header.", correlation.Description);
+
+        var trace = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Generic-Trace-Id"));
+        Assert.Equal(ParameterLocation.Header, trace.In);
+        Assert.False(trace.Required);
+        Assert.True(trace.Deprecated);
+        Assert.Equal("Trace identifier from generic request header set.", trace.Description);
+        var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
+        Assert.Equal(JsonSchemaType.String, traceSchema.Type);
+        Assert.Null(traceSchema.Format);
+    }
+
+    [Fact]
+    public void Populate_GenericResponseHeaderAttribute_CopiesDefinitionMetadataToTargetedStatus()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/generic", "GET", nameof(PathsBuilderFakeFunctions.GenericResponseHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.False(operation.Responses!["200"].Headers?.ContainsKey("X-Processed-By") ?? false);
+
+        var header = Assert.IsType<OpenApiHeader>(operation.Responses!["202"].Headers!["X-Processed-By"]);
+        Assert.False(header.Required);
+        Assert.True(header.Deprecated);
+        Assert.Equal("Processing node from generic response header.", header.Description);
+        var schema = Assert.IsType<OpenApiSchema>(header.Schema);
+        Assert.Equal(JsonSchemaType.String, schema.Type);
+        Assert.Null(schema.Format);
+    }
+
+    [Fact]
+    public void Populate_GenericResponseHeaderSetAttribute_UsesPolymorphicAttributeDiscovery()
+    {
+        var endpoint = Endpoint("/api/widgets/response-headers/generic-set", "GET", nameof(PathsBuilderFakeFunctions.GenericResponseHeaderSetWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        foreach (var statusCode in new[] { "200", "202" })
+        {
+            var processedBy = Assert.IsType<OpenApiHeader>(operation.Responses![statusCode].Headers!["X-Processed-By"]);
+            Assert.True(processedBy.Deprecated);
+            Assert.Equal("Processing node from generic response header.", processedBy.Description);
+            var processedBySchema = Assert.IsType<OpenApiSchema>(processedBy.Schema);
+            Assert.Equal(JsonSchemaType.String, processedBySchema.Type);
+
+            var requestId = Assert.IsType<OpenApiHeader>(operation.Responses![statusCode].Headers!["X-Generic-Request-Id"]);
+            Assert.True(requestId.Required);
+            Assert.False(requestId.Deprecated);
+            Assert.Equal("Correlation identifier from generic response header set.", requestId.Description);
+            var requestIdSchema = Assert.IsType<OpenApiSchema>(requestId.Schema);
+            Assert.Equal(JsonSchemaType.String, requestIdSchema.Type);
+            Assert.Equal("uuid", requestIdSchema.Format);
+        }
     }
 
     [Fact]

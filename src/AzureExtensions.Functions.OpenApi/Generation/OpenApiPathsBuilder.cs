@@ -20,8 +20,8 @@ namespace AzureExtensions.Functions.OpenApi.Generation;
 /// referenced by <c>$ref</c> everywhere they are used.
 /// </para>
 /// <para>
-/// Request headers can come from individual <see cref="OpenApiHeaderParameterAttribute"/> instances
-/// or reusable <see cref="OpenApiHeaderParameterSetAttribute"/> collections. Response headers can
+/// Request headers can come from individual <see cref="OpenApiRequestHeaderParameterAttribute"/>
+/// instances or reusable <see cref="OpenApiRequestHeaderParameterSetAttribute"/> collections. Response headers can
 /// come from individual <see cref="OpenApiResponseHeaderAttribute"/> instances or reusable
 /// <see cref="OpenApiResponseHeaderSetAttribute"/> collections. In every case, header schemas are
 /// produced through the shared <see cref="OpenApiSchemaGenerator"/>.
@@ -113,8 +113,8 @@ internal sealed class OpenApiPathsBuilder
         var operationAttribute = method.GetCustomAttribute<OpenApiOperationAttribute>();
         var pathParamAttributes = method.GetCustomAttributes<OpenApiPathParameterAttribute>().ToList();
         var queryParamAttributes = method.GetCustomAttributes<OpenApiQueryParameterAttribute>().ToList();
-        var headerParamAttributes = method.GetCustomAttributes<OpenApiHeaderParameterAttribute>().ToList();
-        var headerParamSetAttributes = method.GetCustomAttributes<OpenApiHeaderParameterSetAttribute>().ToList();
+        var headerParamAttributes = method.GetCustomAttributes<OpenApiRequestHeaderParameterAttribute>().ToList();
+        var headerParamSetAttributes = method.GetCustomAttributes<OpenApiRequestHeaderParameterSetAttribute>().ToList();
         var requestBodyAttribute = method.GetCustomAttribute<OpenApiRequestBodyAttribute>();
         var responseAttributes = method.GetCustomAttributes<OpenApiResponseAttribute>().ToList();
         var responseHeaderAttributes = method.GetCustomAttributes<OpenApiResponseHeaderAttribute>().ToList();
@@ -174,8 +174,8 @@ internal sealed class OpenApiPathsBuilder
         IReadOnlyList<string> routeParameters,
         IReadOnlyList<OpenApiPathParameterAttribute> pathParamAttributes,
         IReadOnlyList<OpenApiQueryParameterAttribute> queryParamAttributes,
-        IReadOnlyList<OpenApiHeaderParameterSetAttribute> headerParamSetAttributes,
-        IReadOnlyList<OpenApiHeaderParameterAttribute> headerParamAttributes,
+        IReadOnlyList<OpenApiRequestHeaderParameterSetAttribute> headerParamSetAttributes,
+        IReadOnlyList<OpenApiRequestHeaderParameterAttribute> headerParamAttributes,
         OpenApiRequestBodyAttribute? requestBodyAttribute,
         IReadOnlyList<OpenApiResponseAttribute> responseAttributes,
         IReadOnlyList<OpenApiResponseHeaderAttribute> responseHeaderAttributes,
@@ -294,8 +294,8 @@ internal sealed class OpenApiPathsBuilder
     private void AddHeaderParameters(
         OpenApiOperation operation,
         OpenApiComponents components,
-        IReadOnlyList<OpenApiHeaderParameterSetAttribute> headerParamSetAttributes,
-        IReadOnlyList<OpenApiHeaderParameterAttribute> headerParamAttributes)
+        IReadOnlyList<OpenApiRequestHeaderParameterSetAttribute> headerParamSetAttributes,
+        IReadOnlyList<OpenApiRequestHeaderParameterAttribute> headerParamAttributes)
     {
         var individualHeaderNames = new HashSet<string>(
             headerParamAttributes.Select(static attribute => attribute.Name),
@@ -305,9 +305,9 @@ internal sealed class OpenApiPathsBuilder
         {
             var collection = CreateHeaderDefinitionCollection<IOpenApiHeaderDefinitionCollection>(
                 setAttribute.CollectionType,
-                nameof(OpenApiHeaderParameterSetAttribute));
+                nameof(OpenApiRequestHeaderParameterSetAttribute));
             var headers = collection.Headers ?? throw new InvalidOperationException(
-                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiHeaderParameterSetAttribute)} returned null {nameof(IOpenApiHeaderDefinitionCollection.Headers)}.");
+                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiRequestHeaderParameterSetAttribute)} returned null {nameof(IOpenApiHeaderDefinitionCollection.Headers)}.");
 
             foreach (var header in headers)
             {

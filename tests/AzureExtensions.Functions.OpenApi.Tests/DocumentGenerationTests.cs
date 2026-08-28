@@ -316,6 +316,37 @@ public sealed class DocumentGenerationTests
     }
 
     [Fact]
+    public async Task Document_GenericHeaderAttributeFunction_EmitsGenericRequestAndResponseHeaders()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs/generic"]);
+        var operation = pathItem.Operations![HttpMethod.Get];
+
+        var correlation = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Correlation-Id"));
+        Assert.Equal(ParameterLocation.Header, correlation.In);
+        Assert.True(correlation.Required);
+        Assert.Equal("Correlation identifier from generic request header.", correlation.Description);
+        var correlationSchema = Assert.IsType<OpenApiSchema>(correlation.Schema);
+        Assert.Equal("uuid", correlationSchema.Format);
+
+        var trace = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Generic-Trace-Id"));
+        Assert.True(trace.Deprecated);
+
+        var acceptedHeaders = operation.Responses!["202"].Headers!;
+        var processedBy = Assert.IsType<OpenApiHeader>(acceptedHeaders["X-Processed-By"]);
+        Assert.True(processedBy.Deprecated);
+        Assert.Equal("Processing node from generic response header.", processedBy.Description);
+
+        var requestId = Assert.IsType<OpenApiHeader>(acceptedHeaders["X-Generic-Request-Id"]);
+        Assert.True(requestId.Required);
+        var requestIdSchema = Assert.IsType<OpenApiSchema>(requestId.Schema);
+        Assert.Equal("uuid", requestIdSchema.Format);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Processed-By"));
+    }
+
+    [Fact]
     public async Task Document_MalformedHeaderSetFunction_DoesNotBlockOtherDocumentedEndpoints()
     {
         var document = await BuildHeaderSetFixtureDocumentAsync();
