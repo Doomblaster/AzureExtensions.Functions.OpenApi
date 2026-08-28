@@ -193,40 +193,51 @@ If the same headers always travel together, you can define them once and reuse t
 `[OpenApiHeaderParameterSet]` or `[OpenApiResponseHeaderSet]` instead of repeating several
 single-header attributes on every method.
 
-Define a concrete collection type with a public parameterless constructor that implements the
-matching interface:
+Define a concrete collection type with a public parameterless constructor that implements
+`IOpenApiHeaderDefinitionCollection`:
 
 ```csharp
 using AzureExtensions.Functions.OpenApi;
 
 namespace SampleFunctionApp.Headers;
 
-public sealed class CatalogRequestHeaders : IOpenApiRequestHeaderDefinitionCollection
+internal sealed class HeaderDefinition : IOpenApiHeaderDefinition
 {
-    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } =
+    public required string Name { get; init; }
+    public required Type Type { get; init; }
+    public string? Description { get; init; }
+    public bool Required { get; init; }
+    public bool Deprecated { get; init; }
+}
+
+public sealed class CatalogRequestHeaders : IOpenApiHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new RequestHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-Correlation-Id",
             Type = typeof(Guid),
             Description = "Client-supplied correlation identifier for catalog write operations.",
             Required = true,
+            Deprecated = false,
         },
-        new RequestHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-Tenant-Id",
             Type = typeof(Guid),
             Description = "Tenant identifier used to scope the catalog request.",
             Required = true,
+            Deprecated = false,
         },
     ];
 }
 
-public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCollection
+public sealed class CatalogRateLimitHeaders : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiResponseHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new ResponseHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-RateLimit-Limit",
             Type = typeof(int),
@@ -234,7 +245,7 @@ public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCo
             Required = true,
             Deprecated = false,
         },
-        new ResponseHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-RateLimit-Remaining",
             Type = typeof(int),
@@ -245,6 +256,12 @@ public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCo
     ];
 }
 ```
+
+Each reusable header entry implements `IOpenApiHeaderDefinition`, so the same metadata shape now
+works for both request-header parameters and response-header objects. `Deprecated` is available in
+both places for OpenAPI parity: on individual `[OpenApiHeaderParameter]` /
+`[OpenApiResponseHeader]` attributes and on members inside a reusable header set, matching the
+spec's `deprecated` support on both Parameter Objects and Header Objects.
 
 Apply the set attribute the same way you apply individual header attributes:
 

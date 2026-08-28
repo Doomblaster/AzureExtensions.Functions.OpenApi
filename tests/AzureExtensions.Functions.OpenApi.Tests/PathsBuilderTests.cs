@@ -91,6 +91,16 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     public void RequestHeaderDuplicatesWidget() { }
 
+    [OpenApiOperation(OperationId = "deprecatedRequestHeaderWidget", Summary = "Deprecated request header")]
+    [OpenApiHeaderParameter("X-Deprecated-Trace", typeof(string), Required = false, Deprecated = true, Description = "Deprecated trace header.")]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void DeprecatedRequestHeaderWidget() { }
+
+    [OpenApiOperation(OperationId = "deprecatedRequestHeaderSetWidget", Summary = "Deprecated request header set")]
+    [OpenApiHeaderParameterSet(typeof(DeprecatedRequestHeaderSetFixture))]
+    [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
+    public void DeprecatedRequestHeaderSetWidget() { }
+
     [OpenApiOperation(OperationId = "responseHeaderSetTargetedWidget", Summary = "Response header set targeted")]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
     [OpenApiResponse(201, Type = typeof(Widget), Description = "Created.")]
@@ -429,6 +439,32 @@ public sealed class PathsBuilderTests
         var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
         Assert.Equal(JsonSchemaType.String, traceSchema.Type);
         Assert.Equal("uuid", traceSchema.Format);
+    }
+
+    [Fact]
+    public void Populate_RequestHeaderParameter_MapsDeprecatedFlag()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/deprecated", "GET", nameof(PathsBuilderFakeFunctions.DeprecatedRequestHeaderWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var header = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Deprecated-Trace"));
+        Assert.Equal(ParameterLocation.Header, header.In);
+        Assert.True(header.Deprecated);
+        Assert.Equal("Deprecated trace header.", header.Description);
+    }
+
+    [Fact]
+    public void Populate_RequestHeaderSet_MapsDeprecatedFlag()
+    {
+        var endpoint = Endpoint("/api/widgets/request-headers/deprecated-set", "GET", nameof(PathsBuilderFakeFunctions.DeprecatedRequestHeaderSetWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        var header = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Deprecated-Request"));
+        Assert.Equal(ParameterLocation.Header, header.In);
+        Assert.True(header.Deprecated);
+        Assert.Equal("Deprecated request header.", header.Description);
     }
 
     [Fact]

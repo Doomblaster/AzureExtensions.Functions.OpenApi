@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AzureExtensions.Functions.OpenApi\AzureExtensions.Functions.OpenApi.csproj" />
-    <ProjectReference Include="..\..\samples\SampleFunctionApp\SampleFunctionApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

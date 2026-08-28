@@ -2,18 +2,7 @@ using AzureExtensions.Functions.OpenApi;
 
 namespace SampleFunctionApp.Headers;
 
-internal sealed class RequestHeaderDefinition : IOpenApiRequestHeaderDefinition
-{
-    public required string Name { get; init; }
-
-    public required Type Type { get; init; }
-
-    public string? Description { get; init; }
-
-    public bool Required { get; init; }
-}
-
-internal sealed class ResponseHeaderDefinition : IOpenApiResponseHeaderDefinition
+internal sealed class HeaderDefinition : IOpenApiHeaderDefinition
 {
     public required string Name { get; init; }
 
@@ -29,23 +18,25 @@ internal sealed class ResponseHeaderDefinition : IOpenApiResponseHeaderDefinitio
 /// <summary>
 /// Reusable request headers that identify the caller and tenant for item operations.
 /// </summary>
-public sealed class CatalogRequestHeaders : IOpenApiRequestHeaderDefinitionCollection
+public sealed class CatalogRequestHeaders : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new RequestHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-Correlation-Id",
             Type = typeof(Guid),
             Description = "Client-supplied correlation identifier for catalog write operations.",
             Required = true,
+            Deprecated = false,
         },
-        new RequestHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-Tenant-Id",
             Type = typeof(Guid),
             Description = "Tenant identifier used to scope the catalog request.",
             Required = true,
+            Deprecated = false,
         },
     ];
 }
@@ -53,11 +44,11 @@ public sealed class CatalogRequestHeaders : IOpenApiRequestHeaderDefinitionColle
 /// <summary>
 /// Reusable response headers returned with throttled item reads.
 /// </summary>
-public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCollection
+public sealed class CatalogRateLimitHeaders : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiResponseHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new ResponseHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-RateLimit-Limit",
             Type = typeof(int),
@@ -65,7 +56,7 @@ public sealed class CatalogRateLimitHeaders : IOpenApiResponseHeaderDefinitionCo
             Required = true,
             Deprecated = false,
         },
-        new ResponseHeaderDefinition
+        new HeaderDefinition
         {
             Name = "X-RateLimit-Remaining",
             Type = typeof(int),

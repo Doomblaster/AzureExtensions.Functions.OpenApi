@@ -303,11 +303,11 @@ internal sealed class OpenApiPathsBuilder
 
         foreach (var setAttribute in headerParamSetAttributes)
         {
-            var collection = CreateHeaderDefinitionCollection<IOpenApiRequestHeaderDefinitionCollection>(
+            var collection = CreateHeaderDefinitionCollection<IOpenApiHeaderDefinitionCollection>(
                 setAttribute.CollectionType,
                 nameof(OpenApiHeaderParameterSetAttribute));
             var headers = collection.Headers ?? throw new InvalidOperationException(
-                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiHeaderParameterSetAttribute)} returned null {nameof(IOpenApiRequestHeaderDefinitionCollection.Headers)}.");
+                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiHeaderParameterSetAttribute)} returned null {nameof(IOpenApiHeaderDefinitionCollection.Headers)}.");
 
             foreach (var header in headers)
             {
@@ -317,14 +317,14 @@ internal sealed class OpenApiPathsBuilder
                 }
 
                 operation.Parameters!.Add(
-                    CreateHeaderParameter(components, header.Name, header.Type, header.Required, header.Description));
+                    CreateHeaderParameter(components, header.Name, header.Type, header.Required, header.Description, header.Deprecated));
             }
         }
 
         foreach (var attribute in headerParamAttributes)
         {
             operation.Parameters!.Add(
-                CreateHeaderParameter(components, attribute.Name, attribute.Type, attribute.Required, attribute.Description));
+                CreateHeaderParameter(components, attribute.Name, attribute.Type, attribute.Required, attribute.Description, attribute.Deprecated));
         }
     }
 
@@ -395,11 +395,11 @@ internal sealed class OpenApiPathsBuilder
     {
         foreach (var setAttribute in responseHeaderSetAttributes)
         {
-            var collection = CreateHeaderDefinitionCollection<IOpenApiResponseHeaderDefinitionCollection>(
+            var collection = CreateHeaderDefinitionCollection<IOpenApiHeaderDefinitionCollection>(
                 setAttribute.CollectionType,
                 nameof(OpenApiResponseHeaderSetAttribute));
             var headers = collection.Headers ?? throw new InvalidOperationException(
-                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiResponseHeaderSetAttribute)} returned null {nameof(IOpenApiResponseHeaderDefinitionCollection.Headers)}.");
+                $"CollectionType '{setAttribute.CollectionType.FullName}' for {nameof(OpenApiResponseHeaderSetAttribute)} returned null {nameof(IOpenApiHeaderDefinitionCollection.Headers)}.");
             var targetKeys = GetTargetResponseKeys(responses, setAttribute.StatusCodes);
 
             foreach (var header in headers)
@@ -473,7 +473,8 @@ internal sealed class OpenApiPathsBuilder
         string name,
         Type type,
         bool required,
-        string? description)
+        string? description,
+        bool deprecated)
     {
         return new OpenApiParameter
         {
@@ -481,6 +482,7 @@ internal sealed class OpenApiPathsBuilder
             In = ParameterLocation.Header,
             Required = required,
             Description = description,
+            Deprecated = deprecated,
             Schema = _schemaGenerator.GetOrCreateSchema(type, components),
         };
     }

@@ -38,6 +38,11 @@ public sealed class OpenApiHeaderParameterAttribute : Attribute
     public bool Required { get; set; }
 
     /// <summary>
+    /// When <see langword="true"/>, the header is deprecated.
+    /// </summary>
+    public bool Deprecated { get; set; }
+
+    /// <summary>
     /// Optional description of the parameter.
     /// </summary>
     public string? Description { get; set; }

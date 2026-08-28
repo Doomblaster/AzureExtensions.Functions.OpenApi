@@ -8,7 +8,7 @@ namespace AzureExtensions.Functions.OpenApi;
 /// This attribute is a pure metadata carrier consumed by OpenAPI discovery. The
 /// <c>collectionType</c> must be a concrete, non-abstract type with a public
 /// parameterless constructor that implements
-/// <see cref="IOpenApiRequestHeaderDefinitionCollection"/>. Each header declared by the collection
+/// <see cref="IOpenApiHeaderDefinitionCollection"/>. Each header declared by the collection
 /// behaves the same as an individually-declared <see cref="OpenApiHeaderParameterAttribute"/>. On
 /// a case-insensitive name collision with an individual
 /// <see cref="OpenApiHeaderParameterAttribute"/> declared on the same method, the individual
@@ -21,9 +21,9 @@ public sealed class OpenApiHeaderParameterSetAttribute : Attribute
     /// Initializes a new instance of the <see cref="OpenApiHeaderParameterSetAttribute"/> class.
     /// </summary>
     /// <param name="collectionType">
-    /// The reusable request-header collection type. This must be a concrete, non-abstract type
-    /// with a public parameterless constructor that implements
-    /// <see cref="IOpenApiRequestHeaderDefinitionCollection"/>.
+    /// The reusable header collection type. This must be a concrete, non-abstract type with a
+    /// public parameterless constructor that implements
+    /// <see cref="IOpenApiHeaderDefinitionCollection"/>.
     /// </param>
     public OpenApiHeaderParameterSetAttribute(Type collectionType)
     {
@@ -31,7 +31,7 @@ public sealed class OpenApiHeaderParameterSetAttribute : Attribute
     }
 
     /// <summary>
-    /// The reusable request-header collection type.
+    /// The reusable header collection type.
     /// </summary>
     public Type CollectionType { get; }
 }

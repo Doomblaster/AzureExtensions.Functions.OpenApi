@@ -8,7 +8,7 @@ namespace AzureExtensions.Functions.OpenApi;
 /// This attribute is a pure metadata carrier consumed by OpenAPI discovery. The
 /// <c>collectionType</c> must be a concrete, non-abstract type with a public
 /// parameterless constructor that implements
-/// <see cref="IOpenApiResponseHeaderDefinitionCollection"/>. The <c>statusCodes</c>
+/// <see cref="IOpenApiHeaderDefinitionCollection"/>. The <c>statusCodes</c>
 /// semantics mirror <see cref="OpenApiResponseHeaderAttribute"/>: when empty, the header set
 /// applies to every response documented for the method. On a case-insensitive name collision with
 /// an individual <see cref="OpenApiResponseHeaderAttribute"/> targeting the same status code, the
@@ -21,9 +21,9 @@ public sealed class OpenApiResponseHeaderSetAttribute : Attribute
     /// Initializes a new instance of the <see cref="OpenApiResponseHeaderSetAttribute"/> class.
     /// </summary>
     /// <param name="collectionType">
-    /// The reusable response-header collection type. This must be a concrete, non-abstract type
-    /// with a public parameterless constructor that implements
-    /// <see cref="IOpenApiResponseHeaderDefinitionCollection"/>.
+    /// The reusable header collection type. This must be a concrete, non-abstract type with a
+    /// public parameterless constructor that implements
+    /// <see cref="IOpenApiHeaderDefinitionCollection"/>.
     /// </param>
     /// <param name="statusCodes">
     /// The HTTP status codes this header set is attached to. When empty, the header set is
@@ -36,7 +36,7 @@ public sealed class OpenApiResponseHeaderSetAttribute : Attribute
     }
 
     /// <summary>
-    /// The reusable response-header collection type.
+    /// The reusable header collection type.
     /// </summary>
     public Type CollectionType { get; }
 

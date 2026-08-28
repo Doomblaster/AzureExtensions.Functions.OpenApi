@@ -11,7 +11,7 @@ using Xunit;
 namespace AzureExtensions.Functions.OpenApi.Tests;
 
 /// <summary>
-/// End-to-end tests: build a document over the real <c>SampleFunctionApp</c> assembly and assert
+/// End-to-end tests: build a document over fixture functions in the test assembly and assert
 /// the CRUD surface, component schemas, meta-endpoint exclusion, and valid OpenAPI 3.1 serialization.
 /// </summary>
 public sealed class DocumentGenerationTests
@@ -321,11 +321,6 @@ public sealed class DocumentGenerationTests
         var document = await BuildHeaderSetFixtureDocumentAsync();
 
         Assert.True(document.Paths!.ContainsKey("/api/header-set-docs"));
-
-        if (document.Paths.TryGetValue("/api/header-set-docs/malformed", out var malformedPath))
-        {
-            var pathItem = Assert.IsType<OpenApiPathItem>(malformedPath);
-            Assert.Empty(pathItem.Operations!);
-        }
+        Assert.False(document.Paths.ContainsKey("/api/header-set-docs/malformed"));
     }
 }

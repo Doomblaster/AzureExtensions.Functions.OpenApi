@@ -4,18 +4,7 @@ using Microsoft.Azure.Functions.Worker;
 
 namespace AzureExtensions.Functions.OpenApi.Tests;
 
-internal sealed class TestRequestHeaderDefinition : IOpenApiRequestHeaderDefinition
-{
-    public required string Name { get; init; }
-
-    public required Type Type { get; init; }
-
-    public string? Description { get; init; }
-
-    public bool Required { get; init; }
-}
-
-internal sealed class TestResponseHeaderDefinition : IOpenApiResponseHeaderDefinition
+internal sealed class TestHeaderDefinition : IOpenApiHeaderDefinition
 {
     public required string Name { get; init; }
 
@@ -28,53 +17,72 @@ internal sealed class TestResponseHeaderDefinition : IOpenApiResponseHeaderDefin
     public bool Deprecated { get; init; }
 }
 
-internal sealed class RequestHeaderSetFixture : IOpenApiRequestHeaderDefinitionCollection
+internal sealed class RequestHeaderSetFixture : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new TestRequestHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "X-Tenant-Id",
             Type = typeof(Guid),
             Description = "Tenant identifier.",
             Required = true,
+            Deprecated = false,
         },
-        new TestRequestHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "X-Trace-Id",
             Type = typeof(string),
             Description = "Trace identifier.",
             Required = false,
+            Deprecated = false,
         },
     ];
 }
 
-internal sealed class RequestHeaderCollisionFixture : IOpenApiRequestHeaderDefinitionCollection
+internal sealed class RequestHeaderCollisionFixture : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new TestRequestHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "x-trace-id",
             Type = typeof(string),
             Description = "Trace identifier from set.",
             Required = false,
+            Deprecated = false,
         },
-        new TestRequestHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "X-Tenant-Id",
             Type = typeof(Guid),
             Description = "Tenant identifier.",
             Required = true,
+            Deprecated = false,
         },
     ];
 }
 
-internal sealed class ResponseHeaderSetFixture : IOpenApiResponseHeaderDefinitionCollection
+internal sealed class DeprecatedRequestHeaderSetFixture : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiResponseHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new TestResponseHeaderDefinition
+        new TestHeaderDefinition
+        {
+            Name = "X-Deprecated-Request",
+            Type = typeof(string),
+            Description = "Deprecated request header.",
+            Required = false,
+            Deprecated = true,
+        },
+    ];
+}
+
+internal sealed class ResponseHeaderSetFixture : IOpenApiHeaderDefinitionCollection
+{
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
+    [
+        new TestHeaderDefinition
         {
             Name = "X-Request-Id",
             Type = typeof(Guid),
@@ -82,7 +90,7 @@ internal sealed class ResponseHeaderSetFixture : IOpenApiResponseHeaderDefinitio
             Required = true,
             Deprecated = false,
         },
-        new TestResponseHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "X-Served-By",
             Type = typeof(string),
@@ -93,11 +101,11 @@ internal sealed class ResponseHeaderSetFixture : IOpenApiResponseHeaderDefinitio
     ];
 }
 
-internal sealed class ResponseHeaderCollisionFixture : IOpenApiResponseHeaderDefinitionCollection
+internal sealed class ResponseHeaderCollisionFixture : IOpenApiHeaderDefinitionCollection
 {
-    public IReadOnlyList<IOpenApiResponseHeaderDefinition> Headers { get; } =
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } =
     [
-        new TestResponseHeaderDefinition
+        new TestHeaderDefinition
         {
             Name = "x-request-id",
             Type = typeof(string),
@@ -108,13 +116,13 @@ internal sealed class ResponseHeaderCollisionFixture : IOpenApiResponseHeaderDef
     ];
 }
 
-internal sealed class InvalidRequestHeaderSetWithoutPublicParameterlessConstructor : IOpenApiRequestHeaderDefinitionCollection
+internal sealed class InvalidRequestHeaderSetWithoutPublicParameterlessConstructor : IOpenApiHeaderDefinitionCollection
 {
     private InvalidRequestHeaderSetWithoutPublicParameterlessConstructor()
     {
     }
 
-    public IReadOnlyList<IOpenApiRequestHeaderDefinition> Headers { get; } = Array.Empty<IOpenApiRequestHeaderDefinition>();
+    public IReadOnlyList<IOpenApiHeaderDefinition> Headers { get; } = Array.Empty<IOpenApiHeaderDefinition>();
 }
 
 internal sealed class DocumentHeaderSetFunctions

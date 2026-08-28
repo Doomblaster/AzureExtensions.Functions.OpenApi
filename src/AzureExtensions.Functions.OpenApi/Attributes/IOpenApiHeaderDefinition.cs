@@ -1,12 +1,16 @@
 namespace AzureExtensions.Functions.OpenApi;
 
 /// <summary>
-/// Defines a reusable request-header declaration for OpenAPI discovery.
+/// Defines a reusable header declaration for OpenAPI discovery.
 /// </summary>
-public interface IOpenApiRequestHeaderDefinition
+/// <remarks>
+/// Implementations are metadata-only contracts that describe a header once so it can be reused
+/// for either request-header parameters or response-header objects.
+/// </remarks>
+public interface IOpenApiHeaderDefinition
 {
     /// <summary>
-    /// The name of the header as it appears in the request.
+    /// The header name as it appears on the wire.
     /// </summary>
     string Name { get; }
 
@@ -24,4 +28,9 @@ public interface IOpenApiRequestHeaderDefinition
     /// When <see langword="true"/>, the header is required.
     /// </summary>
     bool Required { get; }
+
+    /// <summary>
+    /// When <see langword="true"/>, the header is deprecated.
+    /// </summary>
+    bool Deprecated { get; }
 }

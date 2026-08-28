@@ -29,3 +29,5 @@ Updated repo-root README to document the shipped feature. Verified all attribute
 📌 Team update (2026-08-26T12:41:00+02:00): Nullable `$ref` schema output was fact-checked: `anyOf:[{$ref},{type:null}]` is canonical for OpenAPI 3.1/JSON Schema 2020-12, and Microsoft.OpenApi 3.10.2 serializes it to valid OpenAPI 3.0 without illegal `type:null` — decided by Backend, Tester, Lead, Fact Checker.
 
 📌 Team update (2026-08-26T12:59:00+02:00): README now documents RFC 9457 ProblemDetails support, canonical reusable schemas, application/problem+json, explicit overrides, and sample references — decided by Backend, Functions, Tester, Lead.
+
+📌 Team update (2026-08-28T16:01:40.777+02:00): Header-set delivery is complete: Lead defined the interface-only request/response header-set contracts, review #1 rejected over-broad collision suppression and malformed-endpoint stray path-item behavior, Lead then owned the corrective patch under the Reviewer Rejection Protocol because Backend/Tester were locked out from revising rejected artifacts, and review #2 approved with 132/132 tests passing.

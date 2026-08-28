@@ -165,6 +165,42 @@
 
 **Why:** This preserves backward-compatible ids for the common non-colliding case, gives same-named types across namespaces more readable component names anchored to their CLR origin than immediate numeric suffixes, and still guarantees uniqueness for pathological namespace collisions or reserved-name edge cases.
 
+
+### 2026-08-28: Header-set wiring preserves individual-attribute overrides
+**By:** Backend
+**What:** `OpenApiPathsBuilder` now expands request and response header-set attributes by instantiating their collection types through guarded `Activator.CreateInstance` checks, applies request-set members before individual request-header attributes with case-insensitive de-duplication, and applies response-set members before individual response-header attributes with case-insensitive header overwrites per targeted status code.
+**Why:** This keeps reusable header collections symmetric with existing single-header attributes, preserves the documented "individual attribute wins" escape hatch, and lets malformed collection types fail clearly per-endpoint without aborting the overall document build.
+
+### 2026-08-28: Header-set contracts stay interface-only in this slice
+**By:** Lead
+**What:** Added request and response header-set contracts as public interfaces plus two pure
+metadata attributes. The reusable collection type is carried as <c>Type</c> and documented to be
+concrete, non-abstract, and publicly parameterless-constructible; no helper base classes or
+runtime validation were added in this slice.
+**Why:** This keeps the public API minimal and reversible while giving Backend a clear reflection
+contract to wire into <c>OpenApiPathsBuilder</c> next without coupling consumers to framework
+inheritance or premature convenience types.
+
+### 2026-08-28: Header-set final pre-merge review requests changes
+**By:** Lead
+**What:** Final review does not approve merge yet. The header-set API shape matches the PRD (two attributes, four request/response-qualified interfaces, response status codes on the attribute), and the set-vs-individual collision precedence is implemented case-insensitively. However, `OpenApiPathsBuilder` currently broadens that precedence logic into a behavior change for pre-existing single-header attributes, and the malformed-collection resilience tests permit an empty path item even though the class remarks say a malformed endpoint is skipped.
+**Why:** The PRD explicitly requires no breaking change to existing single-header attribute behavior and asks the malformed-collection path to honor the documented per-endpoint try/catch contract. Before merge, narrow collision suppression to set-member vs individual-attribute collisions only, and align the malformed-endpoint behavior/tests with the documented "endpoint is skipped" contract.
+
+### 2026-08-28: Header-set reviewer-requested corrections
+**By:** Lead
+**What:** Narrowed `OpenApiPathsBuilder` header-set collision handling to the approved scope only. `AddHeaderParameters` now suppresses set members only when a same-named individual `[OpenApiHeaderParameter]` exists on the method (case-insensitive), then appends every individual header attribute unchanged and in original order. `ApplyResponseHeaders` now restores case-sensitive response-header storage and skips a set member only for the specific response status keys already claimed by a same-named individual `[OpenApiResponseHeader]`. `AddEndpoint` now stages all operations locally before touching `document.Paths`, so malformed endpoints contribute nothing unless every operation builds successfully. Tightened the malformed-header-set regression test to require that the malformed endpoint path is absent.
+**Why:** These are reviewer-requested corrections under the Reviewer Rejection Protocol, not new scope. The PRD approved only set-member-vs-individual collision precedence and the class remarks already promised malformed endpoints are skipped without leaving stray empty path items.
+
+### 2026-08-28: Header-set coverage lives in builder regressions plus provider e2e smoke
+**By:** Tester
+**What:** Added focused `PathsBuilderTests` coverage for request-header sets, response-header sets, status-code targeting, empty-status fan-out, case-insensitive collision precedence, and malformed collection resilience; added `DocumentGenerationTests` coverage that runs the full provider/discovery pipeline against real `[Function]` fixtures carrying the new header-set attributes.
+**Why:** Most semantics are owned by `OpenApiPathsBuilder`, so unit coverage there is the fastest regression net. A smaller provider-level test confirms discovery + document generation still surface the new attributes end-to-end without depending on sample-app changes from a separate work item.
+
+### 2026-08-28: Header-set sample and README adoption
+**By:** Functions
+**What:** Added `samples/SampleFunctionApp/Models/ItemHeaderSets.cs`, applied the new request/response header-set attributes in `samples/SampleFunctionApp/Functions/ItemsFunctions.cs`, and updated `README.md` to document reusable header collections and sample usage.
+**Why:** The feature needs a concrete end-to-end sample plus documentation so consumers can copy the intended authoring model and see header sets exercised in a real Azure Functions app.
+
 ## Governance
 
 - All meaningful changes require team consensus
