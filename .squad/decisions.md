@@ -156,6 +156,15 @@
 
 **Why:** OpenAPI response headers are status-code-scoped Header Objects, distinct from request Parameter Objects. A dedicated attribute preserves OpenAPI semantic fidelity while keeping multi-status response-header declarations concise.
 
+### 2026-08-28T13:57:21.332+02:00: Namespace-segment schema-id collision disambiguation (consolidated)
+
+**By:** Backend, Lead
+**Status:** Accepted
+
+**What:** `OpenApiSchemaGenerator.ReserveSchemaId` keeps the first claimant's plain base schema id unchanged. When a different CLR type collides on the same base name, the generator now first tries `lastNamespaceSegment + baseName` (for example `MyApp.Models.Item` -> `ModelsItem`) and only falls back to numeric suffixes on that candidate (`ModelsItem2`, `ModelsItem3`, ...) if needed.
+
+**Why:** This preserves backward-compatible ids for the common non-colliding case, gives same-named types across namespaces more readable component names anchored to their CLR origin than immediate numeric suffixes, and still guarantees uniqueness for pathological namespace collisions or reserved-name edge cases.
+
 ## Governance
 
 - All meaningful changes require team consensus

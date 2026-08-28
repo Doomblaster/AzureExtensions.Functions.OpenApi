@@ -27,3 +27,5 @@
 📌 Team update (2026-08-26T12:41:00+02:00): Nullable `$ref` schema output was fact-checked: `anyOf:[{$ref},{type:null}]` is canonical for OpenAPI 3.1/JSON Schema 2020-12, and Microsoft.OpenApi 3.10.2 serializes it to valid OpenAPI 3.0 without illegal `type:null` — decided by Backend, Tester, Lead, Fact Checker.
 
 📌 Team update (2026-08-26T12:59:00+02:00): ProblemDetails schema/content-type behavior is covered by 17 new tests and full suite verification at 101/101 passing — decided by Backend, Functions, Tester, Lead.
+
+📌 Team update (2026-08-28T13:57:21.332+02:00): Schema-collision regression coverage now uses `SchemaCollisionFixtures.cs` plus `SchemaGeneratorTests` assertions proving same-named types in different namespaces get distinct component ids; the suite passed 122/122 on PR #2 — decided by Tester with Backend's implementation approved by Lead

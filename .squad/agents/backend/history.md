@@ -124,3 +124,5 @@
   (never committed). Did not touch sample/tests/README (owned by Functions/Tester/Lead).
 
 📌 Team update (2026-08-26T12:59:00+02:00): RFC 9457 ProblemDetails support added canonical reusable schemas, validation allOf/errors maps, and default application/problem+json content for problem-family bodies — decided by Backend, Functions, Tester, Lead.
+
+📌 Team update (2026-08-28T13:57:21.332+02:00): `ReserveSchemaId` now preserves the first plain schema id and resolves later same-name CLR collisions by trying `lastNamespaceSegment + baseName` before numeric suffixes; PR #2 carries the change and regression coverage was added alongside it — decided by Backend and approved by Lead

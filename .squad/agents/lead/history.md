@@ -19,6 +19,8 @@ Updated repo-root README to document the shipped feature. Verified all attribute
 
 📌 Team update (2026-08-26T11:30:00+02:00): Attribute-driven OpenAPI generation landed across public attributes/options, reflection discovery, CLR schema components, path/operation generation, sample CRUD endpoints, README docs, and 65/65 passing tests — decided by Lead, Functions, Backend, and Tester.
 
+📌 Team update (2026-08-28T13:57:21.332+02:00): Approved the schema-id collision rule that keeps the first plain base id, then prefers `lastNamespaceSegment + baseName` before numeric suffixes so same-named CLR types across namespaces remain readable and unique; shipped in PR #2
+
 
 📌 Team update (2025-06-02T12:00:00Z): README now documents enum components and nullable schema handling: enums/complex objects are components reused by `$ref`; nullable refs/enums/objects use `anyOf` null unions; nullable inline scalars use type arrays; non-nullable members stay plain — decided by Backend, Tester, Lead.
 
