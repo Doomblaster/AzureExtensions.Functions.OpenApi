@@ -653,4 +653,22 @@ public sealed class PathsBuilderTests
 
         Assert.False(document.Paths.ContainsKey("/api/widgets/malformed-request-headers"));
     }
+
+    [Fact]
+    public void OpenApiResponseHeaderAttribute_NullStatusCodes_NormalizesToEmptyArray()
+    {
+        var attribute = new OpenApiResponseHeaderAttribute("X-Trace-Id", typeof(string), null!);
+
+        Assert.NotNull(attribute.StatusCodes);
+        Assert.Empty(attribute.StatusCodes);
+    }
+
+    [Fact]
+    public void OpenApiResponseHeaderSetAttribute_NullStatusCodes_NormalizesToEmptyArray()
+    {
+        var attribute = new OpenApiResponseHeaderSetAttribute(typeof(ResponseHeaderSetFixture), null!);
+
+        Assert.NotNull(attribute.StatusCodes);
+        Assert.Empty(attribute.StatusCodes);
+    }
 }

@@ -32,7 +32,7 @@ public class OpenApiResponseHeaderAttribute : Attribute
     {
         Name = name;
         Type = type;
-        StatusCodes = statusCodes;
+        StatusCodes = statusCodes ?? [];
     }
 
     /// <summary>

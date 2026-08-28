@@ -32,12 +32,13 @@ public class OpenApiResponseHeaderSetAttribute : Attribute
     /// </param>
     /// <param name="statusCodes">
     /// The HTTP status codes this header set is attached to. When empty, the header set is
-    /// attached to every response documented for the method.
+    /// attached to every response already documented for the method (via other response
+    /// attributes); it does not invent new responses.
     /// </param>
     public OpenApiResponseHeaderSetAttribute(Type collectionType, params int[] statusCodes)
     {
         CollectionType = collectionType;
-        StatusCodes = statusCodes;
+        StatusCodes = statusCodes ?? [];
     }
 
     /// <summary>
@@ -47,7 +48,8 @@ public class OpenApiResponseHeaderSetAttribute : Attribute
 
     /// <summary>
     /// The HTTP status codes this header set is attached to. When empty, the header set is
-    /// attached to every response documented for the method.
+    /// attached to every response already documented for the method (via other response
+    /// attributes); it does not invent new responses.
     /// </summary>
     public int[] StatusCodes { get; }
 }
@@ -69,7 +71,8 @@ public sealed class OpenApiResponseHeaderSetAttribute<T> : OpenApiResponseHeader
     /// </summary>
     /// <param name="statusCodes">
     /// The HTTP status codes this header set is attached to. When empty, the header set is
-    /// attached to every response documented for the method.
+    /// attached to every response already documented for the method (via other response
+    /// attributes); it does not invent new responses.
     /// </param>
     public OpenApiResponseHeaderSetAttribute(params int[] statusCodes)
         : base(typeof(T), statusCodes)
