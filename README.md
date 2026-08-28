@@ -273,7 +273,7 @@ Apply reusable definitions and sets like this:
 [Function("GetItem")]
 [OpenApiOperation(OperationId = "getItem", Summary = "Get an item", Tags = new[] { ItemsTag })]
 [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
-[OpenApiRequestHeaderParameterAttribute<TenantIdHeader>]
+[OpenApiRequestHeaderParameter<TenantIdHeader>]
 [OpenApiResponse(200, Type = typeof(Item), Description = "The requested item.")]
 public IResult GetItem(/* ... */) => /* ... */;
 

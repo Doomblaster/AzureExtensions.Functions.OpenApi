@@ -64,7 +64,7 @@ public sealed class ItemsFunctions
         Description = "Returns a single catalog item by its identifier.",
         Tags = new[] { ItemsTag })]
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
-    [OpenApiRequestHeaderParameterAttribute<TenantIdHeader>]
+    [OpenApiRequestHeaderParameter<TenantIdHeader>]
     [OpenApiResponse(200, Type = typeof(Item), Description = "The requested item.")]
     [OpenApiResponse(404, Type = typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), Description = "No item exists with the given identifier.")]
     public IResult GetItem(
