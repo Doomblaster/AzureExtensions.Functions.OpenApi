@@ -31,3 +31,5 @@
 📌 Team update (2026-08-28T13:57:21.332+02:00): Schema-collision regression coverage now uses `SchemaCollisionFixtures.cs` plus `SchemaGeneratorTests` assertions proving same-named types in different namespaces get distinct component ids; the suite passed 122/122 on PR #2 — decided by Tester with Backend's implementation approved by Lead
 
 📌 Team update (2026-08-28T16:01:40.777+02:00): Tester added HeaderSetTestFixtures.cs plus regression coverage for header-set builder semantics and provider end-to-end behavior; Lead later tightened the malformed-endpoint expectation in the rejected test path under the Reviewer Rejection Protocol, and the corrected suite finished green at 132/132.
+
+📌 Team update (2026-08-28T16:51:06.599+02:00): Tests now cover renamed request-header attribute types plus generic discovery/metadata emission for OpenApiRequestHeaderParameter<T>, OpenApiRequestHeaderParameterSet<T>, OpenApiResponseHeader<T>, and OpenApiResponseHeaderSet<T>; the suite finished green at 139/139 — decided by Lead, Tester, Functions.

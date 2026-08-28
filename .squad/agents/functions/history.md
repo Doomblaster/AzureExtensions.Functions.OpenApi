@@ -93,3 +93,5 @@ ame query param, 200 List<Item>, 400 Results.ValidationProblem + [OpenApiRespons
 📌 Team update (2026-08-26T12:59:00+02:00): Sample app now exercises RFC 9457 ProblemDetails with GetItem 404 Results.Problem and SearchItems 400 Results.ValidationProblem plus required name query — decided by Backend, Functions, Tester, Lead.
 
 📌 Team update (2026-08-28T16:01:40.777+02:00): Functions added the sample ItemHeaderSets.cs, applied request/response header-set attributes in ItemsFunctions.cs, and updated README.md so the new reusable header collections ship with end-to-end sample and docs coverage.
+
+📌 Team update (2026-08-28T16:51:06.599+02:00): SampleFunctionApp and README now demonstrate reusable generic header attributes with TenantIdHeader used directly and via CatalogRequestHeaders, while the legacy Type-based forms remain available for one-off or non-generic usage — decided by Lead, Functions, Tester.

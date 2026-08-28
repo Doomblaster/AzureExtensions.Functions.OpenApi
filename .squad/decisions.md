@@ -201,6 +201,24 @@ inheritance or premature convenience types.
 **What:** Added `samples/SampleFunctionApp/Models/ItemHeaderSets.cs`, applied the new request/response header-set attributes in `samples/SampleFunctionApp/Functions/ItemsFunctions.cs`, and updated `README.md` to document reusable header collections and sample usage.
 **Why:** The feature needs a concrete end-to-end sample plus documentation so consumers can copy the intended authoring model and see header sets exercised in a real Azure Functions app.
 
+### 2026-08-28T16:51:06.599+02:00: Unified header-definition contracts and request-header deprecation support (consolidated)
+
+**By:** Lead, Functions, Tester
+**Status:** Accepted
+
+**What:** Consolidated the request/response-specific reusable header contracts into a single `IOpenApiHeaderDefinition` plus `IOpenApiHeaderDefinitionCollection`, and extended request-side metadata so `Deprecated` is available both on direct request-header attributes and on reusable header-definition types used by header sets. The sample app, README, and test fixtures were updated to adopt the unified contracts and verify request-side deprecation propagation.
+
+**Why:** The split contracts were nearly identical and created avoidable public API surface. A unified reusable-header model keeps request and response metadata aligned with OpenAPI 3.x capabilities while ensuring the sample, docs, and regression suite match the shipped contract.
+
+### 2026-08-28T16:51:06.599+02:00: Request-header rename and generic reusable header attributes (consolidated)
+
+**By:** Lead, Functions, Tester
+**Status:** Accepted
+
+**What:** Renamed `OpenApiHeaderParameterAttribute` to `OpenApiRequestHeaderParameterAttribute` and `OpenApiHeaderParameterSetAttribute` to `OpenApiRequestHeaderParameterSetAttribute` for request/response symmetry, and added generic `Attribute<T>` siblings for all four reusable header attributes: `OpenApiRequestHeaderParameterAttribute<T>`, `OpenApiRequestHeaderParameterSetAttribute<T>`, `OpenApiResponseHeaderAttribute<T>`, and `OpenApiResponseHeaderSetAttribute<T>`. The generic forms preserve the existing non-generic overloads while allowing reusable definitions and collections to be declared with compile-time generic syntax instead of `typeof(...)`. The sample app and README now demonstrate the pattern with `TenantIdHeader` used both standalone and inside `CatalogRequestHeaders`, and the test suite covers all four generic paths with 139/139 passing.
+
+**Why:** Explicit request-side naming removes ambiguity with response headers, and generic attribute sugar makes reusable-header authoring more ergonomic without breaking existing inline or `Type`-based declarations. Sample and test coverage ensure the new API shape is discoverable, documented, and behaviorally verified.
+
 ## Governance
 
 - All meaningful changes require team consensus
