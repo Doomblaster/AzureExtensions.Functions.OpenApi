@@ -8,10 +8,15 @@ namespace AzureExtensions.Functions.OpenApi;
 /// This attribute is a pure metadata carrier consumed by OpenAPI discovery. A response header is
 /// emitted as an OpenAPI Header Object under <c>responses.{statusCode}.headers.{name}</c>. Apply it
 /// once per header; multiple instances are allowed on a single method. A single instance fans out
-/// to every status code it lists.
+/// to every status code it lists. When you already have a reusable
+/// <see cref="IOpenApiHeaderDefinition"/> type, prefer
+/// <see cref="OpenApiResponseHeaderAttribute{T}"/> so the same definition can be reused both as a
+/// standalone response header and as a member of an
+/// <see cref="IOpenApiHeaderDefinitionCollection"/> consumed by
+/// <see cref="OpenApiResponseHeaderSetAttribute"/>.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
-public sealed class OpenApiResponseHeaderAttribute : Attribute
+public class OpenApiResponseHeaderAttribute : Attribute
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApiResponseHeaderAttribute"/> class.
@@ -20,13 +25,14 @@ public sealed class OpenApiResponseHeaderAttribute : Attribute
     /// <param name="type">The CLR type used to derive the header schema.</param>
     /// <param name="statusCodes">
     /// The HTTP status codes this header is attached to. When empty, the header is attached to
-    /// every response documented for the method.
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
     /// </param>
     public OpenApiResponseHeaderAttribute(string name, Type type, params int[] statusCodes)
     {
         Name = name;
         Type = type;
-        StatusCodes = statusCodes;
+        StatusCodes = statusCodes ?? [];
     }
 
     /// <summary>
@@ -41,7 +47,8 @@ public sealed class OpenApiResponseHeaderAttribute : Attribute
 
     /// <summary>
     /// The HTTP status codes this header is attached to. When empty, the header is attached to
-    /// every response documented for the method.
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
     /// </summary>
     public int[] StatusCodes { get; }
 
@@ -59,4 +66,36 @@ public sealed class OpenApiResponseHeaderAttribute : Attribute
     /// Optional description of the header.
     /// </summary>
     public string? Description { get; set; }
+}
+
+/// <summary>
+/// Declares a response header from a reusable <see cref="IOpenApiHeaderDefinition"/> type.
+/// </summary>
+/// <typeparam name="T">
+/// The reusable header definition type. Prefer this generic form when the definition is also
+/// reused inside an <see cref="IOpenApiHeaderDefinitionCollection"/> for bundled header sets.
+/// </typeparam>
+public sealed class OpenApiResponseHeaderAttribute<T> : OpenApiResponseHeaderAttribute
+    where T : IOpenApiHeaderDefinition, new()
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenApiResponseHeaderAttribute{T}"/> class.
+    /// </summary>
+    /// <param name="statusCodes">
+    /// The HTTP status codes this header is attached to. When empty, the header is attached to
+    /// every response already documented for the method (via other response attributes); it does
+    /// not invent new responses.
+    /// </param>
+    public OpenApiResponseHeaderAttribute(params int[] statusCodes)
+        : this(new T(), statusCodes)
+    {
+    }
+
+    private OpenApiResponseHeaderAttribute(IOpenApiHeaderDefinition definition, int[] statusCodes)
+        : base(definition.Name, definition.Type, statusCodes)
+    {
+        Required = definition.Required;
+        Deprecated = definition.Deprecated;
+        Description = definition.Description;
+    }
 }

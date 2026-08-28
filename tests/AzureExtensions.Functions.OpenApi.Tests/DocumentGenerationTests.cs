@@ -11,7 +11,7 @@ using Xunit;
 namespace AzureExtensions.Functions.OpenApi.Tests;
 
 /// <summary>
-/// End-to-end tests: build a document over the real <c>SampleFunctionApp</c> assembly and assert
+/// End-to-end tests: build a document over fixture functions in the test assembly and assert
 /// the CRUD surface, component schemas, meta-endpoint exclusion, and valid OpenAPI 3.1 serialization.
 /// </summary>
 public sealed class DocumentGenerationTests
@@ -24,6 +24,19 @@ public sealed class DocumentGenerationTests
             Version = "1.0.0",
         };
         options.DocumentAssemblies.Add(typeof(Item).Assembly);
+
+        var provider = new OpenApiDocumentProvider(Options.Create(options));
+        return await provider.GetDocumentAsync();
+    }
+
+    private static async Task<OpenApiDocument> BuildHeaderSetFixtureDocumentAsync()
+    {
+        var options = new OpenApiOptions
+        {
+            Title = "Header Set Fixture API",
+            Version = "1.0.0",
+        };
+        options.DocumentAssemblies.Add(typeof(DocumentHeaderSetFunctions).Assembly);
 
         var provider = new OpenApiDocumentProvider(Options.Create(options));
         return await provider.GetDocumentAsync();
@@ -274,5 +287,67 @@ public sealed class DocumentGenerationTests
 
         Assert.Equal("DI Sample API", document.Info!.Title);
         Assert.True(document.Paths!.ContainsKey("/api/items"));
+    }
+
+    [Fact]
+    public async Task Document_TestAssemblyHeaderSetFunction_EmitsRequestAndResponseHeaderSets()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs"]);
+        var operation = pathItem.Operations![HttpMethod.Get];
+
+        var tenant = operation.Parameters!.Single(p => p.Name == "X-Tenant-Id");
+        Assert.Equal(ParameterLocation.Header, tenant.In);
+        Assert.True(tenant.Required);
+
+        var trace = operation.Parameters!.Single(p => p.Name == "X-Trace-Id");
+        Assert.Equal(ParameterLocation.Header, trace.In);
+        Assert.True(trace.Required);
+        var traceSchema = Assert.IsType<OpenApiSchema>(trace.Schema);
+        Assert.Equal("uuid", traceSchema.Format);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Request-Id"));
+        Assert.True(operation.Responses!["201"].Headers!.ContainsKey("X-Served-By"));
+    }
+
+    [Fact]
+    public async Task Document_GenericHeaderAttributeFunction_EmitsGenericRequestAndResponseHeaders()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs/generic"]);
+        var operation = pathItem.Operations![HttpMethod.Get];
+
+        var correlation = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Correlation-Id"));
+        Assert.Equal(ParameterLocation.Header, correlation.In);
+        Assert.True(correlation.Required);
+        Assert.Equal("Correlation identifier from generic request header.", correlation.Description);
+        var correlationSchema = Assert.IsType<OpenApiSchema>(correlation.Schema);
+        Assert.Equal("uuid", correlationSchema.Format);
+
+        var trace = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Generic-Trace-Id"));
+        Assert.True(trace.Deprecated);
+
+        var acceptedHeaders = operation.Responses!["202"].Headers!;
+        var processedBy = Assert.IsType<OpenApiHeader>(acceptedHeaders["X-Processed-By"]);
+        Assert.True(processedBy.Deprecated);
+        Assert.Equal("Processing node from generic response header.", processedBy.Description);
+
+        var requestId = Assert.IsType<OpenApiHeader>(acceptedHeaders["X-Generic-Request-Id"]);
+        Assert.True(requestId.Required);
+        var requestIdSchema = Assert.IsType<OpenApiSchema>(requestId.Schema);
+        Assert.Equal("uuid", requestIdSchema.Format);
+
+        Assert.True(operation.Responses!["200"].Headers!.ContainsKey("X-Processed-By"));
+    }
+
+    [Fact]
+    public async Task Document_MalformedHeaderSetFunction_DoesNotBlockOtherDocumentedEndpoints()
+    {
+        var document = await BuildHeaderSetFixtureDocumentAsync();
+
+        Assert.True(document.Paths!.ContainsKey("/api/header-set-docs"));
+        Assert.False(document.Paths.ContainsKey("/api/header-set-docs/malformed"));
     }
 }

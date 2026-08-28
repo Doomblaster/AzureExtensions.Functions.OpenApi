@@ -126,3 +126,5 @@
 📌 Team update (2026-08-26T12:59:00+02:00): RFC 9457 ProblemDetails support added canonical reusable schemas, validation allOf/errors maps, and default application/problem+json content for problem-family bodies — decided by Backend, Functions, Tester, Lead.
 
 📌 Team update (2026-08-28T13:57:21.332+02:00): `ReserveSchemaId` now preserves the first plain schema id and resolves later same-name CLR collisions by trying `lastNamespaceSegment + baseName` before numeric suffixes; PR #2 carries the change and regression coverage was added alongside it — decided by Backend and approved by Lead
+
+📌 Team update (2026-08-28T16:01:40.777+02:00): Backend wired request/response header-set expansion into OpenApiPathsBuilder; after Lead review found two issues, Lead narrowed the rejected collision/malformed-endpoint behavior in Backend-owned/Tester-owned artifacts per the Reviewer Rejection Protocol, and the final batch was approved with 132/132 tests passing.

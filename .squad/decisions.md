@@ -165,6 +165,69 @@
 
 **Why:** This preserves backward-compatible ids for the common non-colliding case, gives same-named types across namespaces more readable component names anchored to their CLR origin than immediate numeric suffixes, and still guarantees uniqueness for pathological namespace collisions or reserved-name edge cases.
 
+
+### 2026-08-28: Header-set wiring preserves individual-attribute overrides
+**By:** Backend
+**What:** `OpenApiPathsBuilder` now expands request and response header-set attributes by instantiating their collection types through guarded `Activator.CreateInstance` checks, applies request-set members before individual request-header attributes with case-insensitive de-duplication, and applies response-set members before individual response-header attributes with case-insensitive header overwrites per targeted status code.
+**Why:** This keeps reusable header collections symmetric with existing single-header attributes, preserves the documented "individual attribute wins" escape hatch, and lets malformed collection types fail clearly per-endpoint without aborting the overall document build.
+
+### 2026-08-28: Header-set contracts stay interface-only in this slice
+**By:** Lead
+**What:** Added request and response header-set contracts as public interfaces plus two pure
+metadata attributes. The reusable collection type is carried as <c>Type</c> and documented to be
+concrete, non-abstract, and publicly parameterless-constructible; no helper base classes or
+runtime validation were added in this slice.
+**Why:** This keeps the public API minimal and reversible while giving Backend a clear reflection
+contract to wire into <c>OpenApiPathsBuilder</c> next without coupling consumers to framework
+inheritance or premature convenience types.
+
+### 2026-08-28: Header-set final pre-merge review requests changes
+**By:** Lead
+**What:** Final review does not approve merge yet. The header-set API shape matches the PRD (two attributes, four request/response-qualified interfaces, response status codes on the attribute), and the set-vs-individual collision precedence is implemented case-insensitively. However, `OpenApiPathsBuilder` currently broadens that precedence logic into a behavior change for pre-existing single-header attributes, and the malformed-collection resilience tests permit an empty path item even though the class remarks say a malformed endpoint is skipped.
+**Why:** The PRD explicitly requires no breaking change to existing single-header attribute behavior and asks the malformed-collection path to honor the documented per-endpoint try/catch contract. Before merge, narrow collision suppression to set-member vs individual-attribute collisions only, and align the malformed-endpoint behavior/tests with the documented "endpoint is skipped" contract.
+
+### 2026-08-28: Header-set reviewer-requested corrections
+**By:** Lead
+**What:** Narrowed `OpenApiPathsBuilder` header-set collision handling to the approved scope only. `AddHeaderParameters` now suppresses set members only when a same-named individual `[OpenApiHeaderParameter]` exists on the method (case-insensitive), then appends every individual header attribute unchanged and in original order. `ApplyResponseHeaders` now restores case-sensitive response-header storage and skips a set member only for the specific response status keys already claimed by a same-named individual `[OpenApiResponseHeader]`. `AddEndpoint` now stages all operations locally before touching `document.Paths`, so malformed endpoints contribute nothing unless every operation builds successfully. Tightened the malformed-header-set regression test to require that the malformed endpoint path is absent.
+**Why:** These are reviewer-requested corrections under the Reviewer Rejection Protocol, not new scope. The PRD approved only set-member-vs-individual collision precedence and the class remarks already promised malformed endpoints are skipped without leaving stray empty path items.
+
+### 2026-08-28: Header-set coverage lives in builder regressions plus provider e2e smoke
+**By:** Tester
+**What:** Added focused `PathsBuilderTests` coverage for request-header sets, response-header sets, status-code targeting, empty-status fan-out, case-insensitive collision precedence, and malformed collection resilience; added `DocumentGenerationTests` coverage that runs the full provider/discovery pipeline against real `[Function]` fixtures carrying the new header-set attributes.
+**Why:** Most semantics are owned by `OpenApiPathsBuilder`, so unit coverage there is the fastest regression net. A smaller provider-level test confirms discovery + document generation still surface the new attributes end-to-end without depending on sample-app changes from a separate work item.
+
+### 2026-08-28: Header-set sample and README adoption
+**By:** Functions
+**What:** Added `samples/SampleFunctionApp/Models/ItemHeaderSets.cs`, applied the new request/response header-set attributes in `samples/SampleFunctionApp/Functions/ItemsFunctions.cs`, and updated `README.md` to document reusable header collections and sample usage.
+**Why:** The feature needs a concrete end-to-end sample plus documentation so consumers can copy the intended authoring model and see header sets exercised in a real Azure Functions app.
+
+### 2026-08-28T16:51:06.599+02:00: Unified header-definition contracts and request-header deprecation support (consolidated)
+
+**By:** Lead, Functions, Tester
+**Status:** Accepted
+
+**What:** Consolidated the request/response-specific reusable header contracts into a single `IOpenApiHeaderDefinition` plus `IOpenApiHeaderDefinitionCollection`, and extended request-side metadata so `Deprecated` is available both on direct request-header attributes and on reusable header-definition types used by header sets. The sample app, README, and test fixtures were updated to adopt the unified contracts and verify request-side deprecation propagation.
+
+**Why:** The split contracts were nearly identical and created avoidable public API surface. A unified reusable-header model keeps request and response metadata aligned with OpenAPI 3.x capabilities while ensuring the sample, docs, and regression suite match the shipped contract.
+
+### 2026-08-28T16:51:06.599+02:00: Request-header rename and generic reusable header attributes (consolidated)
+
+**By:** Lead, Functions, Tester
+**Status:** Accepted
+
+**What:** Renamed `OpenApiHeaderParameterAttribute` to `OpenApiRequestHeaderParameterAttribute` and `OpenApiHeaderParameterSetAttribute` to `OpenApiRequestHeaderParameterSetAttribute` for request/response symmetry, and added generic `Attribute<T>` siblings for all four reusable header attributes: `OpenApiRequestHeaderParameterAttribute<T>`, `OpenApiRequestHeaderParameterSetAttribute<T>`, `OpenApiResponseHeaderAttribute<T>`, and `OpenApiResponseHeaderSetAttribute<T>`. The generic forms preserve the existing non-generic overloads while allowing reusable definitions and collections to be declared with compile-time generic syntax instead of `typeof(...)`. The sample app and README now demonstrate the pattern with `TenantIdHeader` used both standalone and inside `CatalogRequestHeaders`, and the test suite covers all four generic paths with 139/139 passing.
+
+**Why:** Explicit request-side naming removes ambiguity with response headers, and generic attribute sugar makes reusable-header authoring more ergonomic without breaking existing inline or `Type`-based declarations. Sample and test coverage ensure the new API shape is discoverable, documented, and behaviorally verified.
+
+### 2026-08-28: Naming correction note for earlier header-set decision entries
+
+**By:** Squad (Coordinator)
+**Status:** Accepted
+
+**What:** Flagged by Copilot's PR #3 review as append-only-history nits, not code issues: the "Header-set reviewer-requested corrections" entry above refers to `[OpenApiHeaderParameter]`, and the "Header-set sample and README adoption" entry references `samples/SampleFunctionApp/Models/ItemHeaderSets.cs`. Both were accurate at the time they were written. The subsequent "Request-header rename..." and "Unified header-definition contracts..." entries later renamed that attribute to `OpenApiRequestHeaderParameterAttribute` and the sample file was placed at `samples/SampleFunctionApp/Headers/ItemHeaderSets.cs`. This note is appended (not a retroactive edit) to point future readers to the current names/paths without altering the historical record.
+
+**Why:** `.squad/decisions.md` is append-only; the fix is a forward-pointing clarification rather than rewriting prior entries.
+
 ## Governance
 
 - All meaningful changes require team consensus
