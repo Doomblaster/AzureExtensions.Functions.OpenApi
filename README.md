@@ -74,7 +74,7 @@ many as you need. Parameter attributes may be repeated on a single method.
 | --- | --- | --- |
 | `[OpenApiOperation]` | *(none)* | `OperationId`, `Summary`, `Description`, `Tags`, `Deprecated` |
 | `[OpenApiQueryParameter]` | `(string name, Type type)` | `Required`, `Description` |
-| `[OpenApiRequestHeaderParameter]` | `(string name, Type type)` | `Required`, `Description`, generic `T : IOpenApiHeaderDefinition, new()` |
+| `[OpenApiRequestHeaderParameter]` | `(string name, Type type)` | `Required`, `Deprecated`, `Description`, generic `T : IOpenApiHeaderDefinition, new()` |
 | `[OpenApiRequestHeaderParameterSet]` | `(Type collectionType)` | `CollectionType`, generic `T : IOpenApiHeaderDefinitionCollection, new()` |
 | `[OpenApiPathParameter]` | `(string name, Type type)` | `Required` (default `true`), `Description` |
 | `[OpenApiRequestBody]` | `(Type type)` | `Required` (default `true`), `ContentType`, `Description` |
