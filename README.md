@@ -601,9 +601,9 @@ Requires the .NET 10 SDK.
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/blob/main/LICENSE).
 
 ## Releasing
 
 Maintainer release/publishing details (versioning, CI/CD workflows, NuGet.org Trusted Publishing
-setup) live in [`docs/RELEASING.md`](docs/RELEASING.md).
+setup) live in [`docs/RELEASING.md`](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/blob/main/docs/RELEASING.md).
