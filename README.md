@@ -603,7 +603,7 @@ Requires the .NET 10 SDK.
 
 Licensed under the [MIT License](LICENSE).
 
-## Contributing
+## Releasing
 
 Maintainer release/publishing details (versioning, CI/CD workflows, NuGet.org Trusted Publishing
 setup) live in [`docs/RELEASING.md`](docs/RELEASING.md).
