@@ -21,7 +21,8 @@ public interface IOpenApiResponseDefinition
     Type? Type { get; }
 
     /// <summary>
-    /// The media type of the response body.
+    /// The media type of the response body. Ignored when <see cref="Type"/> is
+    /// <see langword="null"/>, since a bodyless response has no content to describe.
     /// </summary>
     string ContentType { get; }
 

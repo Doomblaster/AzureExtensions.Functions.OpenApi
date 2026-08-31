@@ -11,6 +11,7 @@ public sealed class NotFoundResponseDefinition : IOpenApiResponseDefinition
 
     public Type? Type => null;
 
+    // ContentType is ignored by OpenAPI generation because Type is null (no response body).
     public string ContentType => "application/json";
 
     public string Description => "No item exists with the given identifier.";
