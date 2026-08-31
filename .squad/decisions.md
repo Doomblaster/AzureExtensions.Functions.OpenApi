@@ -228,6 +228,28 @@ inheritance or premature convenience types.
 
 **Why:** `.squad/decisions.md` is append-only; the fix is a forward-pointing clarification rather than rewriting prior entries.
 
+### 2026-08-31: Add generic reusable response attribute
+**By:** Lead
+**What:** Added `IOpenApiResponseDefinition` plus `OpenApiResponseAttribute<T>` as the response-side generic reusable-definition pattern, while keeping `OpenApiResponseAttribute` backward compatible apart from removing `sealed` so the generic sibling can inherit it.
+**Why:** This mirrors the shipped generic header-attribute pattern from PR #3, keeps response metadata reusable without `typeof(...)` boilerplate, and preserves polymorphic reflection discovery through the existing base attribute contract.
+
+### 2026-08-31: Tester coverage for generic response attribute
+**By:** Tester
+**What:** Added unit coverage for the new response-side reusable-definition pattern. `PathsBuilderTests` now verifies `OpenApiResponseAttribute<T>` copies `StatusCode`, `Type`, `ContentType`, and `Description` directly from a reusable `IOpenApiResponseDefinition`, and that a `[OpenApiResponse<T>]` fixture method produces the same documented 404 response schema/content/description as the equivalent non-generic `[OpenApiResponse(...)]` declaration. Added reusable response-definition fixtures in `HeaderSetTestFixtures.cs`.
+**Why:** This keeps the new generic response attribute aligned with the already-shipped generic header pattern and catches regressions both at direct attribute construction time and through `OpenApiPathsBuilder`'s polymorphic attribute discovery path.
+
+### 2026-08-31: Sample app adopts reusable generic response definition
+**By:** Functions
+**What:** Added `samples\SampleFunctionApp\Responses\NotFoundResponseDefinition.cs` as the sample app's reusable no-body 404 response definition implementing `IOpenApiResponseDefinition`, replaced the duplicated bodyless 404 declarations on `samples\SampleFunctionApp\Functions\ItemsFunctions.cs` with `[OpenApiResponse<NotFoundResponseDefinition>]`, and documented the generic response form in `README.md`.
+**Why:** The sample now mirrors the existing reusable header-definition pattern with a response-focused example, removes duplicated metadata in `ItemsFunctions`, and gives consumers a concrete documented path for adopting `OpenApiResponseAttribute<T>`.
+
+### 2026-08-31: Final review approves generic reusable response attribute
+**By:** Lead
+**Verdict:** APPROVED
+**What was reviewed:** Final pre-PR review of the generic reusable response-definition change set across the public attribute contract, path-builder behavior, tests, sample app, and README.
+**Outcome:** `OpenApiResponseAttribute` is correctly unsealed only to enable inheritance by `OpenApiResponseAttribute<T>` with no other behavior change; the generic attribute copies `StatusCode`, `Type`, `ContentType`, and `Description` from `new T()` as intended; `OpenApiPathsBuilder` already discovers the generic form through `GetCustomAttributes<OpenApiResponseAttribute>()` with no code changes required; the new tests meaningfully cover both constructor metadata copying and emitted OpenAPI parity versus the non-generic attribute; the sample/README usage is accurate and preserves the prior 404 contract on `UpdateItem` and `DeleteItem`.
+**Verification:** `dotnet build` succeeded with 0 warnings / 0 errors, and `.\tests\AzureExtensions.Functions.OpenApi.Tests\bin\Debug\net10.0\AzureExtensions.Functions.OpenApi.Tests.exe` passed 143/143 tests.
+
 ## Governance
 
 - All meaningful changes require team consensus

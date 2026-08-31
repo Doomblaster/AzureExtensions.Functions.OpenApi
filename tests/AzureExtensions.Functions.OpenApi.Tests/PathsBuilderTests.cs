@@ -149,6 +149,14 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiResponseHeaderSet<GenericResponseHeaderSetFixture>(200, 202)]
     public void GenericResponseHeaderSetWidget() { }
 
+    [OpenApiOperation(OperationId = "nonGenericResponseDefinitionWidget", Summary = "Non-generic response definition")]
+    [OpenApiResponse(404, Type = typeof(NotFoundResponseBodyFixture), ContentType = "application/json", Description = "Not found.")]
+    public void NonGenericResponseDefinitionWidget() { }
+
+    [OpenApiOperation(OperationId = "genericResponseDefinitionWidget", Summary = "Generic response definition")]
+    [OpenApiResponse<NotFoundResponseDefinitionFixture>]
+    public void GenericResponseDefinitionWidget() { }
+
     [OpenApiOperation(OperationId = "malformedRequestHeaderSetWidget", Summary = "Malformed request header set")]
     [OpenApiRequestHeaderParameterSet(typeof(InvalidRequestHeaderSetWithoutPublicParameterlessConstructor))]
     [OpenApiResponse(200, Type = typeof(Widget), Description = "Found.")]
@@ -587,6 +595,36 @@ public sealed class PathsBuilderTests
     }
 
     [Fact]
+    public void Populate_GenericResponseAttribute_MatchesNonGenericResponseOutput()
+    {
+        var genericEndpoint = Endpoint("/api/widgets/response/generic", "GET", nameof(PathsBuilderFakeFunctions.GenericResponseDefinitionWidget));
+        var nonGenericEndpoint = Endpoint("/api/widgets/response/non-generic", "GET", nameof(PathsBuilderFakeFunctions.NonGenericResponseDefinitionWidget));
+
+        var genericOperation = Populate(genericEndpoint, includeUnannotated: false, out var genericDocument);
+        var nonGenericOperation = Populate(nonGenericEndpoint, includeUnannotated: false, out var nonGenericDocument);
+
+        var genericResponse = genericOperation.Responses!["404"];
+        var nonGenericResponse = nonGenericOperation.Responses!["404"];
+
+        Assert.Equal("Not found.", genericResponse.Description);
+        Assert.Equal(nonGenericResponse.Description, genericResponse.Description);
+
+        var genericContent = genericResponse.Content!;
+        var nonGenericContent = nonGenericResponse.Content!;
+        Assert.True(genericContent.ContainsKey("application/json"));
+        Assert.True(nonGenericContent.ContainsKey("application/json"));
+        Assert.Equal(nonGenericContent.Keys, genericContent.Keys);
+
+        var genericSchema = Assert.IsType<OpenApiSchemaReference>(genericContent["application/json"].Schema);
+        var nonGenericSchema = Assert.IsType<OpenApiSchemaReference>(nonGenericContent["application/json"].Schema);
+        Assert.Equal(nameof(NotFoundResponseBodyFixture), genericSchema.Reference!.Id);
+        Assert.Equal(nonGenericSchema.Reference!.Id, genericSchema.Reference!.Id);
+
+        Assert.True(genericDocument.Components!.Schemas!.ContainsKey(nameof(NotFoundResponseBodyFixture)));
+        Assert.True(nonGenericDocument.Components!.Schemas!.ContainsKey(nameof(NotFoundResponseBodyFixture)));
+    }
+
+    [Fact]
     public void Populate_ResponseHeaderSet_EmptyStatusCodes_AttachesToAllPresentResponses()
     {
         var endpoint = Endpoint("/api/widgets/response-headers/all", "GET", nameof(PathsBuilderFakeFunctions.ResponseHeaderSetAllWidget));
@@ -670,5 +708,16 @@ public sealed class PathsBuilderTests
 
         Assert.NotNull(attribute.StatusCodes);
         Assert.Empty(attribute.StatusCodes);
+    }
+
+    [Fact]
+    public void OpenApiResponseAttribute_Generic_CopiesDefinitionMetadata()
+    {
+        var attribute = new OpenApiResponseAttribute<NotFoundResponseDefinitionFixture>();
+
+        Assert.Equal(404, attribute.StatusCode);
+        Assert.Equal(typeof(NotFoundResponseBodyFixture), attribute.Type);
+        Assert.Equal("application/json", attribute.ContentType);
+        Assert.Equal("Not found.", attribute.Description);
     }
 }

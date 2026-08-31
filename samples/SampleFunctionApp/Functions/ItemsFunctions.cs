@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using SampleFunctionApp.Headers;
 using SampleFunctionApp.Models;
+using SampleFunctionApp.Responses;
 
 namespace SampleFunctionApp.Functions;
 
@@ -162,7 +163,7 @@ public sealed class ItemsFunctions
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
     [OpenApiRequestBody(typeof(UpdateItemRequest), Description = "The updated item values.")]
     [OpenApiResponse(200, Type = typeof(Item), Description = "The updated item.")]
-    [OpenApiResponse(404, Description = "No item exists with the given identifier.")]
+    [OpenApiResponse<NotFoundResponseDefinition>]
     public async Task<IResult> UpdateItem(
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "items/{id}")] HttpRequest req,
         int id)
@@ -195,7 +196,7 @@ public sealed class ItemsFunctions
         Tags = new[] { ItemsTag })]
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
     [OpenApiResponse(204, Description = "The item was deleted.")]
-    [OpenApiResponse(404, Description = "No item exists with the given identifier.")]
+    [OpenApiResponse<NotFoundResponseDefinition>]
     public IResult DeleteItem(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "items/{id}")] HttpRequest req,
         int id)

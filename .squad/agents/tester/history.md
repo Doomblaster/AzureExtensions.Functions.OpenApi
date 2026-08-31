@@ -33,3 +33,5 @@
 📌 Team update (2026-08-28T16:01:40.777+02:00): Tester added HeaderSetTestFixtures.cs plus regression coverage for header-set builder semantics and provider end-to-end behavior; Lead later tightened the malformed-endpoint expectation in the rejected test path under the Reviewer Rejection Protocol, and the corrected suite finished green at 132/132.
 
 📌 Team update (2026-08-28T16:51:06.599+02:00): Tests now cover renamed request-header attribute types plus generic discovery/metadata emission for OpenApiRequestHeaderParameter<T>, OpenApiRequestHeaderParameterSet<T>, OpenApiResponseHeader<T>, and OpenApiResponseHeaderSet<T>; the suite finished green at 139/139 — decided by Lead, Tester, Functions.
+
+📌 Team update (2026-08-31T11:40:04.333+02:00): Tester added `PathsBuilderTests` coverage for `OpenApiResponseAttribute<T>` metadata copying and generic-vs-non-generic emitted-response parity, plus reusable response-definition fixtures, and finished green at 143/143 — decided by Lead, Tester, Functions.

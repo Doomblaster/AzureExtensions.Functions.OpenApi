@@ -183,6 +183,22 @@ internal sealed class GenericResponseHeaderSetFixture : IOpenApiHeaderDefinition
     ];
 }
 
+internal sealed class NotFoundResponseBodyFixture
+{
+    public string Message { get; set; } = string.Empty;
+}
+
+internal sealed class NotFoundResponseDefinitionFixture : IOpenApiResponseDefinition
+{
+    public int StatusCode => 404;
+
+    public Type? Type => typeof(NotFoundResponseBodyFixture);
+
+    public string ContentType => "application/json";
+
+    public string? Description => "Not found.";
+}
+
 internal sealed class DocumentHeaderSetFunctions
 {
     [Function("DocumentHeaderSetFunction")]
