@@ -5,10 +5,13 @@ namespace AzureExtensions.Functions.OpenApi;
 /// </summary>
 /// <remarks>
 /// This attribute is a pure metadata carrier consumed by OpenAPI discovery. Apply it once per
-/// documented status code; multiple instances are allowed on a single method.
+/// documented status code; multiple instances are allowed on a single method. When you already
+/// have a reusable <see cref="IOpenApiResponseDefinition"/> type, prefer
+/// <see cref="OpenApiResponseAttribute{T}"/> so the same definition can be reused across multiple
+/// endpoints without repeating the response metadata.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
-public sealed class OpenApiResponseAttribute : Attribute
+public class OpenApiResponseAttribute : Attribute
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApiResponseAttribute"/> class.
@@ -39,4 +42,30 @@ public sealed class OpenApiResponseAttribute : Attribute
     /// Optional description of the response.
     /// </summary>
     public string? Description { get; set; }
+}
+
+/// <summary>
+/// Declares a response from a reusable <see cref="IOpenApiResponseDefinition"/> type.
+/// </summary>
+/// <typeparam name="T">
+/// The reusable response definition type.
+/// </typeparam>
+public sealed class OpenApiResponseAttribute<T> : OpenApiResponseAttribute
+    where T : IOpenApiResponseDefinition, new()
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenApiResponseAttribute{T}"/> class.
+    /// </summary>
+    public OpenApiResponseAttribute()
+        : this(new T())
+    {
+    }
+
+    private OpenApiResponseAttribute(IOpenApiResponseDefinition definition)
+        : base(definition.StatusCode)
+    {
+        Type = definition.Type;
+        ContentType = definition.ContentType;
+        Description = definition.Description;
+    }
 }

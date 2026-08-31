@@ -78,7 +78,7 @@ many as you need. Parameter attributes may be repeated on a single method.
 | `[OpenApiRequestHeaderParameterSet]` | `(Type collectionType)` | `CollectionType`, generic `T : IOpenApiHeaderDefinitionCollection, new()` |
 | `[OpenApiPathParameter]` | `(string name, Type type)` | `Required` (default `true`), `Description` |
 | `[OpenApiRequestBody]` | `(Type type)` | `Required` (default `true`), `ContentType`, `Description` |
-| `[OpenApiResponse]` | `(int statusCode)` | `Type` (omit for no body), `ContentType`, `Description` |
+| `[OpenApiResponse]` | `(int statusCode)` | `Type` (omit for no body), `ContentType`, `Description`, generic `T : IOpenApiResponseDefinition, new()` |
 | `[OpenApiResponseHeader]` | `(string name, Type type, params int[] statusCodes)` | `Required`, `Deprecated`, `Description`, generic `T : IOpenApiHeaderDefinition, new()` |
 | `[OpenApiResponseHeaderSet]` | `(Type collectionType, params int[] statusCodes)` | `CollectionType`, `StatusCodes`, generic `T : IOpenApiHeaderDefinitionCollection, new()` |
 
@@ -130,7 +130,7 @@ public sealed class ItemsFunctions
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
     [OpenApiRequestBody(typeof(UpdateItemRequest), Description = "The updated item values.")]
     [OpenApiResponse(200, Type = typeof(Item), Description = "The updated item.")]
-    [OpenApiResponse(404, Description = "No item exists with the given identifier.")]
+    [OpenApiResponse<NotFoundResponseDefinition>]
     public Task<IResult> UpdateItem(
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "items/{id}")] HttpRequest req,
         int id)
@@ -141,7 +141,7 @@ public sealed class ItemsFunctions
     [OpenApiOperation(OperationId = "deleteItem", Summary = "Delete an item", Tags = new[] { ItemsTag })]
     [OpenApiPathParameter("id", typeof(int), Description = "The item identifier.")]
     [OpenApiResponse(204, Description = "The item was deleted.")]
-    [OpenApiResponse(404, Description = "No item exists with the given identifier.")]
+    [OpenApiResponse<NotFoundResponseDefinition>]
     public IResult DeleteItem(
         [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "items/{id}")] HttpRequest req,
         int id)
@@ -150,6 +150,34 @@ public sealed class ItemsFunctions
 ```
 
 A complete, runnable version of this app lives in `samples/SampleFunctionApp/`.
+
+### Reusable response definitions
+
+When several endpoints share the same response metadata, implement
+`IOpenApiResponseDefinition` once and reuse it through the generic
+`[OpenApiResponse<T>]` form:
+
+```csharp
+public sealed class NotFoundResponseDefinition : IOpenApiResponseDefinition
+{
+    public int StatusCode => 404;
+    public Type? Type => null;
+
+    // ContentType is ignored by OpenAPI generation because Type is null (no response body).
+    public string ContentType => "application/json";
+    public string Description => "No item exists with the given identifier.";
+}
+
+[OpenApiResponse<NotFoundResponseDefinition>]
+```
+
+Prefer the generic form when you already have a reusable response definition because the compiler
+enforces `new()` plus the correct interface contract. The original non-generic overload remains
+available for one-off responses:
+
+```csharp
+[OpenApiResponse(404, Description = "No item exists with the given identifier.")]
+```
 
 ### Response headers
 
