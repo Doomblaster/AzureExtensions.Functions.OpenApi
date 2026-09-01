@@ -10,6 +10,16 @@ as `0.0.0-preview.*` from the `dev` branch.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-01
+
+### Fixed
+- Duplicate `operationId` when a single function serves multiple HTTP verbs (e.g. a
+  `[HttpTrigger(..., "get", "post")]`). Each generated operation now gets a unique id by
+  prefixing the verb as a word while preserving the id's casing convention, e.g. `pingWidget`
+  becomes `getPingWidget` / `postPingWidget` and `Ping` becomes `GetPing` / `PostPing`.
+  Single-verb functions keep their original `operationId` unchanged. This resolves the OpenAPI
+  "operationId must be unique among all operations" validation error.
+
 ## [0.1.0] - 2026-09-01
 
 ### Added
@@ -24,5 +34,6 @@ as `0.0.0-preview.*` from the `dev` branch.
 - Swagger UI endpoint with `X-Forwarded-Host` support.
 - Built with the `Microsoft.OpenApi` object model and serialized by that package.
 
-[Unreleased]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/compare/v0.1.0...dev
+[Unreleased]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/compare/v0.1.1...dev
+[0.1.1]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/releases/tag/v0.1.0
