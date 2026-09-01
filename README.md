@@ -1,5 +1,6 @@
 # AzureExtensions.Functions.OpenApi
 
+[![NuGet](https://img.shields.io/nuget/v/AzureExtensions.Functions.OpenApi.svg)](https://www.nuget.org/packages/AzureExtensions.Functions.OpenApi)
 [![CI](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
