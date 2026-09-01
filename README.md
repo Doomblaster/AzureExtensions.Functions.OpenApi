@@ -34,6 +34,32 @@ Once registered, the app serves (using the default `api` route prefix):
 - `GET /api/openapi.yaml` — the OpenAPI document as YAML
 - `GET /api/swagger` — an interactive [Swagger UI](#swagger-ui) page (enabled by default)
 
+## Base path and `servers`
+
+The generated **path keys are relative to the API base** — for example `/items`, not `/api/items`.
+The Functions host route prefix (`api` by default) is a global base path, so it is advertised once
+via the document's top-level `servers` array, the idiomatic OpenAPI way to express a shared base URL
+(an operation's effective URL is `servers[].url` + path key):
+
+```jsonc
+"servers": [ { "url": "https://your-app.azurewebsites.net/api" } ],
+"paths": { "/items": { }, "/items/{id}": { } }
+```
+
+By default the server URL is **inferred from the incoming request** — scheme, host, and path base,
+honouring `X-Forwarded-Proto` / `X-Forwarded-Host` — so the advertised base matches wherever the
+document is served from (local dev, deployed, or behind a reverse proxy). If the host cannot be
+determined, it falls back to a relative base path (`/api`). To advertise fixed URLs instead (for
+example a public API gateway), set `OpenApiOptions.Servers`; those entries are used verbatim and
+request inference is skipped:
+
+```csharp
+services.AddOpenApi(options =>
+{
+    options.Servers.Add(new OpenApiServer { Url = "https://api.contoso.com/v1", Description = "Production" });
+});
+```
+
 ## Install
 
 ```bash
@@ -565,7 +591,8 @@ Configure via the `AddOpenApi(options => { ... })` callback (`OpenApiOptions`):
 | `Title` | `"OpenAPI Document"` | `info.title` of the document |
 | `Version` | `"1.0.0"` | `info.version` (your API version) |
 | `Description` | `null` | `info.description` |
-| `RoutePrefix` | `"api"` | Functions host route prefix, used to advertise endpoint URLs |
+| `RoutePrefix` | `"api"` | Functions host route prefix; advertised as the base path via `servers` (not repeated on path keys) |
+| `Servers` | *(empty)* | Explicit `servers` entries; when empty, one server is inferred from the request (host/scheme/path base, honouring `X-Forwarded-*`) |
 | `JsonRoute` | `"openapi.json"` | Route (relative to `RoutePrefix`) serving JSON |
 | `YamlRoute` | `"openapi.yaml"` | Route (relative to `RoutePrefix`) serving YAML |
 | `SpecVersion` | `OpenApi3_1` | OpenAPI Specification version to serialize against |

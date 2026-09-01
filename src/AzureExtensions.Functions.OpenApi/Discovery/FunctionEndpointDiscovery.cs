@@ -58,11 +58,13 @@ internal sealed class FunctionEndpointDiscovery
     /// The assemblies to scan. When empty, a default set is resolved via
     /// <see cref="GetDefaultAssemblies"/>.
     /// </param>
-    /// <param name="routePrefix">
-    /// The host route prefix (for example <c>api</c>). May be empty to serve from the root.
-    /// </param>
     /// <returns>The discovered endpoints, in discovery order.</returns>
-    public IReadOnlyList<DiscoveredEndpoint> Discover(IEnumerable<Assembly> assemblies, string routePrefix)
+    /// <remarks>
+    /// Emitted path keys are relative to the host route prefix (for example <c>/widgets</c>, not
+    /// <c>/api/widgets</c>). The prefix is a global host setting and is advertised via the
+    /// document's <c>servers</c> base URL rather than repeated on every path.
+    /// </remarks>
+    public IReadOnlyList<DiscoveredEndpoint> Discover(IEnumerable<Assembly> assemblies)
     {
         var candidates = (assemblies ?? []).Where(static a => a is not null).Distinct().ToList();
         if (candidates.Count == 0)
@@ -78,7 +80,7 @@ internal sealed class FunctionEndpointDiscovery
             {
                 foreach (var method in GetMethodsSafe(type))
                 {
-                    var endpoint = TryDiscover(method, routePrefix);
+                    var endpoint = TryDiscover(method);
                     if (endpoint is not null)
                     {
                         results.Add(endpoint);
@@ -121,7 +123,7 @@ internal sealed class FunctionEndpointDiscovery
         return result;
     }
 
-    private static DiscoveredEndpoint? TryDiscover(MethodInfo method, string routePrefix)
+    private static DiscoveredEndpoint? TryDiscover(MethodInfo method)
     {
         try
         {
@@ -147,7 +149,7 @@ internal sealed class FunctionEndpointDiscovery
                 ? functionAttribute.Name
                 : httpTrigger.Route!;
 
-            var path = CombinePath(routePrefix, template);
+            var path = CombinePath(template);
             var routeParameters = ExtractRouteParameters(template);
 
             return new DiscoveredEndpoint(path, methods, method, routeParameters);
@@ -193,12 +195,12 @@ internal sealed class FunctionEndpointDiscovery
         return names;
     }
 
-    private static string CombinePath(string? routePrefix, string? route)
+    private static string CombinePath(string? route)
     {
         var normalizedRoute = NormalizeRouteTokens(route);
 
-        var segments = new[] { routePrefix, normalizedRoute }
-            .SelectMany(static s => (s ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries));
+        var segments = ((normalizedRoute ?? string.Empty))
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
 
         return "/" + string.Join('/', segments);
     }

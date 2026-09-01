@@ -56,7 +56,7 @@ public sealed class OpenApiHttpFunctions
         _logger.LogDebug("Serving OpenAPI document as JSON at spec version {SpecVersion}.", _options.SpecVersion);
 
         var document = await _documentProvider.GetDocumentAsync(request.HttpContext.RequestAborted).ConfigureAwait(false);
-        var json = Serialize(document, "json", _options.SpecVersion);
+        var json = Serialize(WithServers(document, request), "json", _options.SpecVersion);
 
         return Results.Text(json, JsonContentType, statusCode: StatusCodes.Status200OK);
     }
@@ -73,7 +73,7 @@ public sealed class OpenApiHttpFunctions
         _logger.LogDebug("Serving OpenAPI document as YAML at spec version {SpecVersion}.", _options.SpecVersion);
 
         var document = await _documentProvider.GetDocumentAsync(request.HttpContext.RequestAborted).ConfigureAwait(false);
-        var yaml = Serialize(document, "yaml", _options.SpecVersion);
+        var yaml = Serialize(WithServers(document, request), "yaml", _options.SpecVersion);
 
         return Results.Text(yaml, YamlContentType, statusCode: StatusCodes.Status200OK);
     }
@@ -114,16 +114,75 @@ public sealed class OpenApiHttpFunctions
     /// </summary>
     private string BuildJsonUrl(HttpRequest request)
     {
-        var pathBase = request.PathBase.HasValue ? request.PathBase.Value!.Trim('/') : string.Empty;
         var prefix = _options.RoutePrefix.Trim('/');
         var jsonRoute = _options.JsonRoute.Trim('/');
+        var suffix = string.Join('/', new[] { prefix, jsonRoute }.Where(static s => !string.IsNullOrEmpty(s)));
 
-        var path = string.Join('/', new[] { pathBase, prefix, jsonRoute }.Where(s => !string.IsNullOrEmpty(s)));
+        var baseUrl = ResolveRequestBaseUrl(request);
+        if (baseUrl is null)
+        {
+            return "/" + suffix;
+        }
 
+        return string.IsNullOrEmpty(suffix) ? baseUrl : $"{baseUrl}/{suffix}";
+    }
+
+    /// <summary>
+    /// Produces the per-request <c>servers</c> list for the document. When
+    /// <see cref="OpenApiOptions.Servers"/> is configured it is used verbatim; otherwise a single
+    /// server is inferred from the request base URL (scheme/host/path base, honoring forwarded
+    /// headers) combined with <see cref="OpenApiOptions.RoutePrefix"/>. When the host cannot be
+    /// resolved the URL falls back to a relative base path so the document is still valid.
+    /// </summary>
+    private IList<OpenApiServer> BuildServers(HttpRequest request)
+    {
+        if (_options.Servers.Count > 0)
+        {
+            return _options.Servers.ToList();
+        }
+
+        var prefix = _options.RoutePrefix.Trim('/');
+        var baseUrl = ResolveRequestBaseUrl(request);
+
+        string url;
+        if (baseUrl is null)
+        {
+            url = string.IsNullOrEmpty(prefix) ? "/" : "/" + prefix;
+        }
+        else
+        {
+            url = string.IsNullOrEmpty(prefix) ? baseUrl : $"{baseUrl}/{prefix}";
+        }
+
+        return new List<OpenApiServer> { new() { Url = url } };
+    }
+
+    /// <summary>
+    /// Returns a per-request shallow copy of the cached document with its <c>servers</c> set. The
+    /// cached document is shared across requests, so it is never mutated; the copy carries the
+    /// request-specific server list while sharing the (read-only during serialization) paths and
+    /// components.
+    /// </summary>
+    private OpenApiDocument WithServers(OpenApiDocument document, HttpRequest request) =>
+        new(document) { Servers = BuildServers(request) };
+
+    /// <summary>
+    /// Resolves the request's public-facing base URL as <c>{scheme}://{host}</c> (plus the request
+    /// path base when present), honoring <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c>. Returns
+    /// <see langword="null"/> when no host can be determined.
+    /// </summary>
+    private static string? ResolveRequestBaseUrl(HttpRequest request)
+    {
         var scheme = ResolveForwardedValue(request, "X-Forwarded-Proto") ?? request.Scheme;
         var host = ResolveForwardedValue(request, "X-Forwarded-Host") ?? request.Host.Value;
+        if (string.IsNullOrEmpty(host))
+        {
+            return null;
+        }
 
-        return $"{scheme}://{host}/{path}";
+        var pathBase = request.PathBase.HasValue ? request.PathBase.Value!.Trim('/') : string.Empty;
+        var baseUrl = $"{scheme}://{host}";
+        return string.IsNullOrEmpty(pathBase) ? baseUrl : $"{baseUrl}/{pathBase}";
     }
 
     /// <summary>
