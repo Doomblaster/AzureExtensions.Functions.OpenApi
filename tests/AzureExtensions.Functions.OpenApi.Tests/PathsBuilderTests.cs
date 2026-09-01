@@ -37,6 +37,9 @@ public sealed class PathsBuilderFakeFunctions
     [OpenApiOperation(OperationId = "pingWidget", Summary = "Ping")]
     public void PingWidget() { }
 
+    [OpenApiOperation(OperationId = "Ping", Summary = "Ping (Pascal)")]
+    public void PascalPingWidget() { }
+
     public void UnannotatedWidget() { }
 
     [OpenApiOperation(OperationId = "getProblemWidget", Summary = "Get widget or problem")]
@@ -225,6 +228,71 @@ public sealed class PathsBuilderTests
         Assert.Equal("Fetch a widget.", operation.Description);
         Assert.NotNull(operation.Tags);
         Assert.Contains(operation.Tags!, t => t.Reference?.Id == "Widgets");
+    }
+
+    [Fact]
+    public void Populate_MultipleVerbs_ProducesUniqueOperationIds()
+    {
+        var endpoint = new DiscoveredEndpoint(
+            "/api/ping",
+            new[] { "GET", "POST" },
+            Method(nameof(PathsBuilderFakeFunctions.PingWidget)),
+            Array.Empty<string>());
+
+        var document = NewDocument();
+        new OpenApiPathsBuilder().Populate(document, new[] { endpoint }, includeUnannotated: false);
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/ping"]);
+        var get = pathItem.Operations![HttpMethod.Get];
+        var post = pathItem.Operations![HttpMethod.Post];
+
+        Assert.Equal("getPingWidget", get.OperationId);
+        Assert.Equal("postPingWidget", post.OperationId);
+        Assert.NotEqual(get.OperationId, post.OperationId);
+    }
+
+    [Fact]
+    public void Populate_MultipleVerbs_PreservesPascalCaseConvention()
+    {
+        var endpoint = new DiscoveredEndpoint(
+            "/api/ping-pascal",
+            new[] { "GET", "POST" },
+            Method(nameof(PathsBuilderFakeFunctions.PascalPingWidget)),
+            Array.Empty<string>());
+
+        var document = NewDocument();
+        new OpenApiPathsBuilder().Populate(document, new[] { endpoint }, includeUnannotated: false);
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/ping-pascal"]);
+        Assert.Equal("GetPing", pathItem.Operations![HttpMethod.Get].OperationId);
+        Assert.Equal("PostPing", pathItem.Operations![HttpMethod.Post].OperationId);
+    }
+
+    [Fact]
+    public void Populate_SingleVerb_LeavesOperationIdUnchanged()
+    {
+        var endpoint = Endpoint("/api/ping", "GET", nameof(PathsBuilderFakeFunctions.PingWidget));
+
+        var operation = Populate(endpoint, includeUnannotated: false, out _);
+
+        Assert.Equal("pingWidget", operation.OperationId);
+    }
+
+    [Fact]
+    public void Populate_MultipleVerbs_WithoutOperationId_LeavesIdsNull()
+    {
+        var endpoint = new DiscoveredEndpoint(
+            "/api/unannotated",
+            new[] { "GET", "POST" },
+            Method(nameof(PathsBuilderFakeFunctions.UnannotatedWidget)),
+            Array.Empty<string>());
+
+        var document = NewDocument();
+        new OpenApiPathsBuilder().Populate(document, new[] { endpoint }, includeUnannotated: true);
+
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/unannotated"]);
+        Assert.Null(pathItem.Operations![HttpMethod.Get].OperationId);
+        Assert.Null(pathItem.Operations![HttpMethod.Post].OperationId);
     }
 
     [Fact]

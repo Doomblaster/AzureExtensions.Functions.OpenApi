@@ -157,6 +157,11 @@ internal sealed class OpenApiPathsBuilder
                 responseHeaderAttributes,
                 responseHeaderSetAttributes);
 
+            if (methods.Count > 1 && !string.IsNullOrEmpty(operation.OperationId))
+            {
+                operation.OperationId = DisambiguateOperationId(operation.OperationId!, httpMethod);
+            }
+
             operations.Add(new KeyValuePair<HttpMethod, OpenApiOperation>(ParseHttpMethod(httpMethod), operation));
         }
 
@@ -633,4 +638,29 @@ internal sealed class OpenApiPathsBuilder
 
     private static HttpMethod ParseHttpMethod(string verb) =>
         string.IsNullOrWhiteSpace(verb) ? HttpMethod.Get : HttpMethod.Parse(verb.Trim());
+
+    // When a single function serves multiple HTTP verbs, each generated operation must have a
+    // unique operationId. The verb is prefixed as a word while preserving the original id's casing
+    // convention so the result stays a clean identifier for client generators:
+    //   camelCase  "pingWidget" + "GET"  -> "getPingWidget"
+    //   PascalCase "Ping"       + "GET"  -> "GetPing"
+    private static string DisambiguateOperationId(string operationId, string httpMethod)
+    {
+        var verb = httpMethod.Trim();
+        if (verb.Length == 0 || operationId.Length == 0)
+        {
+            return operationId;
+        }
+
+        verb = verb.ToLowerInvariant();
+
+        if (char.IsUpper(operationId[0]))
+        {
+            var pascalVerb = char.ToUpperInvariant(verb[0]) + verb[1..];
+            return pascalVerb + operationId;
+        }
+
+        var capitalizedBody = char.ToUpperInvariant(operationId[0]) + operationId[1..];
+        return verb + capitalizedBody;
+    }
 }
