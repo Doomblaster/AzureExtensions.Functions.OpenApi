@@ -10,6 +10,19 @@ as `0.0.0-preview.*` from the `dev` branch.
 
 ## [Unreleased]
 
+### Changed
+- **Path keys are now relative to the API base**; the Functions route prefix (`api` by default) is
+  advertised via the document's top-level `servers` array instead of being repeated on every path
+  (e.g. `/items` with `servers: [{ "url": ".../api" }]`, not `/api/items`). This is the idiomatic
+  OpenAPI representation of a shared base path and is friendlier to client generators. The server URL
+  is inferred from the incoming request by default (scheme/host/path base, honouring
+  `X-Forwarded-Proto` / `X-Forwarded-Host`), with a relative fallback; set the new
+  `OpenApiOptions.Servers` to advertise fixed URLs instead. **Consumers relying on `/api` in the
+  generated path keys will need to update.**
+
+### Added
+- `OpenApiOptions.Servers` for supplying explicit `servers` entries (overrides request inference).
+
 ## [0.1.1] - 2026-09-01
 
 ### Fixed

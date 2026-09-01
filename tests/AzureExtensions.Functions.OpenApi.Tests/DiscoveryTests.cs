@@ -42,10 +42,10 @@ public sealed class DiscoveryFakeFunctions
 /// </summary>
 public sealed class DiscoveryTests
 {
-    private static IReadOnlyList<DiscoveredEndpoint> DiscoverFakes(string routePrefix = "api")
+    private static IReadOnlyList<DiscoveredEndpoint> DiscoverFakes()
     {
         var discovery = new FunctionEndpointDiscovery();
-        return discovery.Discover(new[] { typeof(DiscoveryFakeFunctions).Assembly }, routePrefix);
+        return discovery.Discover(new[] { typeof(DiscoveryFakeFunctions).Assembly });
     }
 
     private static DiscoveredEndpoint Find(IReadOnlyList<DiscoveredEndpoint> endpoints, string function) =>
@@ -71,11 +71,11 @@ public sealed class DiscoveryTests
     }
 
     [Fact]
-    public void Discover_BuildsPrefixedPath_AndStripsRouteConstraints()
+    public void Discover_BuildsRelativePath_AndStripsRouteConstraints()
     {
         var endpoint = Find(DiscoverFakes(), nameof(DiscoveryFakeFunctions.GetThing));
 
-        Assert.Equal("/api/things/{id}", endpoint.Path);
+        Assert.Equal("/things/{id}", endpoint.Path);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class DiscoveryTests
         var endpoint = Find(DiscoverFakes(), nameof(DiscoveryFakeFunctions.MultiVerbThing));
 
         Assert.Equal(new[] { "GET", "POST" }, endpoint.HttpMethods);
-        Assert.Equal("/api/things", endpoint.Path);
+        Assert.Equal("/things", endpoint.Path);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class DiscoveryTests
     {
         var endpoint = Find(DiscoverFakes(), nameof(DiscoveryFakeFunctions.NoRouteThing));
 
-        Assert.Equal("/api/NoRouteThing", endpoint.Path);
+        Assert.Equal("/NoRouteThing", endpoint.Path);
         Assert.Empty(endpoint.RouteParameters);
     }
 
@@ -117,24 +117,8 @@ public sealed class DiscoveryTests
     {
         var endpoint = Find(DiscoverFakes(), nameof(DiscoveryFakeFunctions.OptionalTokenThing));
 
-        Assert.Equal("/api/widgets/{key}", endpoint.Path);
+        Assert.Equal("/widgets/{key}", endpoint.Path);
         Assert.Equal(new[] { "key" }, endpoint.RouteParameters);
-    }
-
-    [Fact]
-    public void Discover_HonorsCustomRoutePrefix()
-    {
-        var endpoint = Find(DiscoverFakes("v2"), nameof(DiscoveryFakeFunctions.GetThing));
-
-        Assert.Equal("/v2/things/{id}", endpoint.Path);
-    }
-
-    [Fact]
-    public void Discover_WithEmptyPrefix_ServesFromRoot()
-    {
-        var endpoint = Find(DiscoverFakes(""), nameof(DiscoveryFakeFunctions.MultiVerbThing));
-
-        Assert.Equal("/things", endpoint.Path);
     }
 
     [Fact]

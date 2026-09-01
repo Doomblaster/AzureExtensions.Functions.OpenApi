@@ -81,7 +81,7 @@ internal sealed class OpenApiDocumentProvider : IOpenApiDocumentProvider
                 ? _options.DocumentAssemblies
                 : discovery.GetDefaultAssemblies();
 
-            var endpoints = discovery.Discover(assemblies, _options.RoutePrefix);
+            var endpoints = discovery.Discover(assemblies);
 
             // The default assembly scan can include this library's own assembly, which declares the
             // openapi.json/openapi.yaml meta-endpoints. The served spec must describe the CONSUMER's

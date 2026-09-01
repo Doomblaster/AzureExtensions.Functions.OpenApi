@@ -30,9 +30,21 @@ public sealed class OpenApiOptions
 
     /// <summary>
     /// The route prefix the Functions host uses for HTTP triggers. Defaults to <c>api</c>,
-    /// matching the Azure Functions default. Used to advertise the effective endpoint URLs.
+    /// matching the Azure Functions default. This is the base path for the API and is advertised
+    /// via the document's <c>servers</c> entry rather than repeated on every path key. It also
+    /// drives the effective URLs of the served document/Swagger UI endpoints.
     /// </summary>
     public string RoutePrefix { get; set; } = "api";
+
+    /// <summary>
+    /// Optional explicit <c>servers</c> for the generated document. When empty (the default), a
+    /// single server is inferred from the incoming request (scheme/host, honoring
+    /// <c>X-Forwarded-Proto</c> / <c>X-Forwarded-Host</c> and the request path base) combined with
+    /// <see cref="RoutePrefix"/>, so the advertised base URL matches wherever the document is served
+    /// from. Add entries here to advertise fixed URLs instead (for example a public API gateway),
+    /// in which case they are used verbatim and request inference is skipped.
+    /// </summary>
+    public IList<OpenApiServer> Servers { get; } = new List<OpenApiServer>();
 
     /// <summary>
     /// The route (relative to <see cref="RoutePrefix"/>) that serves the JSON document.

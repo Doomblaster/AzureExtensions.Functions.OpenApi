@@ -47,8 +47,8 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        Assert.True(document.Paths!.ContainsKey("/api/items"));
-        Assert.True(document.Paths!.ContainsKey("/api/items/{id}"));
+        Assert.True(document.Paths!.ContainsKey("/items"));
+        Assert.True(document.Paths!.ContainsKey("/items/{id}"));
     }
 
     [Fact]
@@ -56,8 +56,8 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items"]);
-        var itemById = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items/{id}"]);
+        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/items"]);
+        var itemById = Assert.IsType<OpenApiPathItem>(document.Paths!["/items/{id}"]);
 
         Assert.True(items.Operations!.ContainsKey(HttpMethod.Get));   // ListItems
         Assert.True(items.Operations!.ContainsKey(HttpMethod.Post));  // CreateItem
@@ -171,8 +171,8 @@ public sealed class DocumentGenerationTests
         Assert.StartsWith("3.1", root.GetProperty("openapi").GetString());
 
         var paths = root.GetProperty("paths");
-        Assert.True(paths.TryGetProperty("/api/items", out _));
-        Assert.True(paths.TryGetProperty("/api/items/{id}", out _));
+        Assert.True(paths.TryGetProperty("/items", out _));
+        Assert.True(paths.TryGetProperty("/items/{id}", out _));
 
         var schemas = root.GetProperty("components").GetProperty("schemas");
         Assert.True(schemas.TryGetProperty(nameof(Item), out _));
@@ -183,7 +183,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var itemById = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items/{id}"]);
+        var itemById = Assert.IsType<OpenApiPathItem>(document.Paths!["/items/{id}"]);
         var getItem = itemById.Operations![HttpMethod.Get];
 
         var response = getItem.Responses!["404"];
@@ -199,7 +199,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var search = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items/search"]);
+        var search = Assert.IsType<OpenApiPathItem>(document.Paths!["/items/search"]);
         var operation = search.Operations![HttpMethod.Get];
 
         var name = operation.Parameters!.Single(p => p.Name == "name");
@@ -212,7 +212,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var search = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items/search"]);
+        var search = Assert.IsType<OpenApiPathItem>(document.Paths!["/items/search"]);
         var operation = search.Operations![HttpMethod.Get];
 
         // 400 -> HttpValidationProblemDetails served as application/problem+json.
@@ -243,7 +243,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items"]);
+        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/items"]);
         var create = items.Operations![HttpMethod.Post];
 
         var header = Assert.IsType<OpenApiHeader>(create.Responses!["201"].Headers!["Location"]);
@@ -259,7 +259,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildSampleDocumentAsync();
 
-        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/items"]);
+        var items = Assert.IsType<OpenApiPathItem>(document.Paths!["/items"]);
         var list = items.Operations![HttpMethod.Get];
 
         var header = Assert.IsType<OpenApiHeader>(list.Responses!["200"].Headers!["X-RateLimit-Remaining"]);
@@ -286,7 +286,7 @@ public sealed class DocumentGenerationTests
         var document = await provider.GetDocumentAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("DI Sample API", document.Info!.Title);
-        Assert.True(document.Paths!.ContainsKey("/api/items"));
+        Assert.True(document.Paths!.ContainsKey("/items"));
     }
 
     [Fact]
@@ -294,7 +294,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildHeaderSetFixtureDocumentAsync();
 
-        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs"]);
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/header-set-docs"]);
         var operation = pathItem.Operations![HttpMethod.Get];
 
         var tenant = operation.Parameters!.Single(p => p.Name == "X-Tenant-Id");
@@ -316,7 +316,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildHeaderSetFixtureDocumentAsync();
 
-        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/api/header-set-docs/generic"]);
+        var pathItem = Assert.IsType<OpenApiPathItem>(document.Paths!["/header-set-docs/generic"]);
         var operation = pathItem.Operations![HttpMethod.Get];
 
         var correlation = Assert.IsType<OpenApiParameter>(operation.Parameters!.Single(p => p.Name == "X-Correlation-Id"));
@@ -347,7 +347,7 @@ public sealed class DocumentGenerationTests
     {
         var document = await BuildHeaderSetFixtureDocumentAsync();
 
-        Assert.True(document.Paths!.ContainsKey("/api/header-set-docs"));
-        Assert.False(document.Paths.ContainsKey("/api/header-set-docs/malformed"));
+        Assert.True(document.Paths!.ContainsKey("/header-set-docs"));
+        Assert.False(document.Paths.ContainsKey("/header-set-docs/malformed"));
     }
 }
