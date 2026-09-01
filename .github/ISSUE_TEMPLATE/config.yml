@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/discussions
+    about: Ask questions and discuss usage here (enable Discussions on the repo, or use issues).
+  - name: Report a security vulnerability
+    url: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/security/advisories/new
+    about: Please report security issues privately, not as public issues.

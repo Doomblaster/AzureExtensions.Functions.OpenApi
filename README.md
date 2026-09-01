@@ -1,6 +1,7 @@
 # AzureExtensions.Functions.OpenApi
 
 [![CI](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A reusable .NET 10 class library that adds an **OpenAPI 3.x document endpoint** to an
 [Azure Functions isolated worker (v4)](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
@@ -598,6 +599,13 @@ dotnet build AzureExtensions.Functions.OpenApi.slnx
 ```
 
 Requires the .NET 10 SDK.
+
+## Contributing
+
+Contributions are welcome! Please read the [Contributing guide](CONTRIBUTING.md) for the
+build/test steps and branching model, and note our [Code of Conduct](CODE_OF_CONDUCT.md).
+Use the issue templates to file [bugs or feature requests](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/issues/new/choose).
+For security issues, see [SECURITY.md](SECURITY.md).
 
 ## License
 
