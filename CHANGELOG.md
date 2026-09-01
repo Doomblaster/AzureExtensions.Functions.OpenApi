@@ -10,6 +10,8 @@ as `0.0.0-preview.*` from the `dev` branch.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-01
+
 ### Added
 - OpenAPI 3.x document endpoint for Azure Functions isolated worker (v4) apps via a single
   `AddOpenApi()` registration call.
@@ -22,4 +24,5 @@ as `0.0.0-preview.*` from the `dev` branch.
 - Swagger UI endpoint with `X-Forwarded-Host` support.
 - Built with the `Microsoft.OpenApi` object model and serialized by that package.
 
-[Unreleased]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/commits/dev
+[Unreleased]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/compare/v0.1.0...dev
+[0.1.0]: https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/releases/tag/v0.1.0
