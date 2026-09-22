@@ -8,7 +8,7 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download) (see [`global.json`](global.json) for the pinned version)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) (see [`global.json`](global.json) for the pinned version; the sample app still targets .NET 10, while the package targets .NET 8/.NET 9/.NET 10)
 - Git
 
 ## Getting started
@@ -59,7 +59,7 @@ This repo uses a **dev-first** flow:
 ## Coding conventions
 
 - Target framework and language settings follow the existing projects
-  (`net10.0`, nullable enabled, implicit usings).
+  (`net8.0;net9.0;net10.0` for the library/tests, `net10.0` for the sample app, nullable enabled, implicit usings).
 - Match the surrounding code style; keep changes surgical and avoid unrelated churn.
 - Prefer attribute-driven metadata for OpenAPI surface, consistent with the current design.
 

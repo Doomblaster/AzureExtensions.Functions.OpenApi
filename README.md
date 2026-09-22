@@ -4,7 +4,7 @@
 [![CI](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml/badge.svg)](https://github.com/Doomblaster/AzureExtensions.Functions.OpenApi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A reusable .NET 10 class library that adds an **OpenAPI 3.x document endpoint** to an
+A reusable .NET class library for **.NET 8, .NET 9, and .NET 10** that adds an **OpenAPI 3.x document endpoint** to an
 [Azure Functions isolated worker (v4)](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
 app. Reference the package, call one registration method, and your app exposes an OpenAPI
 specification over HTTP that reflects its **real API**.
@@ -626,7 +626,7 @@ samples/SampleFunctionApp/        # isolated worker v4 sample consumer
 dotnet build AzureExtensions.Functions.OpenApi.slnx
 ```
 
-Requires the .NET 10 SDK.
+Building the full repo requires the .NET 10 SDK. The published package targets .NET 8, .NET 9, and .NET 10.
 
 ## Contributing
 

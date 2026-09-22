@@ -32,8 +32,14 @@ jobs:
       - name: Build
         run: dotnet build AzureExtensions.Functions.OpenApi.slnx -c Release --no-restore
 
-      - name: Test
-        run: dotnet test --solution AzureExtensions.Functions.OpenApi.slnx -c Release --no-build
+      - name: Test net8.0
+        run: dotnet test tests/AzureExtensions.Functions.OpenApi.Tests/AzureExtensions.Functions.OpenApi.Tests.csproj -f net8.0 -c Release --no-build
+
+      - name: Test net9.0
+        run: dotnet test tests/AzureExtensions.Functions.OpenApi.Tests/AzureExtensions.Functions.OpenApi.Tests.csproj -f net9.0 -c Release --no-build
+
+      - name: Test net10.0
+        run: dotnet test tests/AzureExtensions.Functions.OpenApi.Tests/AzureExtensions.Functions.OpenApi.Tests.csproj -f net10.0 -c Release --no-build
 
       - name: Pack
         run: dotnet pack src/AzureExtensions.Functions.OpenApi/AzureExtensions.Functions.OpenApi.csproj -c Release --no-build -o artifacts
